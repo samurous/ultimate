@@ -68,6 +68,7 @@ public final class TAPreferences {
 	private final int mLimitAnalysisTime;
 	private final int mLimitPathProgramCount;
 	private final boolean mCollectInterpolantStatistics;
+	private final boolean mHeuristicEmptinessCheck;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -126,8 +127,8 @@ public final class TAPreferences {
 		mLimitAnalysisTime = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_TIME);
 		mLimitPathProgramCount = mPrefs.getInt(TraceAbstractionPreferenceInitializer.LABEL_USERLIMIT_PATH_PROGRAM);
 
-		mCollectInterpolantStatistics =
-				mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS);
+		mCollectInterpolantStatistics = mPrefs
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_COMPUTE_INTERPOLANT_SEQUENCE_STATISTICS);
 
 		if (artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			throw new IllegalArgumentException(
@@ -138,6 +139,9 @@ public final class TAPreferences {
 				&& (artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON || artifact() == Artifact.INTERPOLANT_AUTOMATON)) {
 			throw new IllegalArgumentException("There is no interpolant" + "automaton in iteration 0.");
 		}
+
+		mHeuristicEmptinessCheck = mPrefs
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HEURISTIC_EMPTINESS_CHECK);
 
 	}
 
@@ -333,8 +337,8 @@ public final class TAPreferences {
 	}
 
 	/**
-	 * @return A positive integer that specifies a time limit in seconds for the analysis of an error location or zero
-	 *         if no limit is set.
+	 * @return A positive integer that specifies a time limit in seconds for the
+	 *         analysis of an error location or zero if no limit is set.
 	 */
 	public int getLimitAnalysisTime() {
 		return mLimitAnalysisTime;
@@ -350,5 +354,9 @@ public final class TAPreferences {
 
 	public boolean collectInterpolantStatistics() {
 		return mCollectInterpolantStatistics;
+	}
+
+	public boolean useHeuristicEmptinessCheck() {
+		return mHeuristicEmptinessCheck;
 	}
 }
