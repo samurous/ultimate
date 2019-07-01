@@ -46,6 +46,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
+/**
+ * Resources like dag and overlays for a single procedure.
+ * 
+ * @author schaetzc@tf.uni-freiburg.de
+ */
 public class ProcedureResources {
 
 	private final RegexDag<IIcfgTransition<IcfgLocation>> mRegexDag;
@@ -78,8 +83,8 @@ public class ProcedureResources {
 				.map(regexToDag::add)
 				.forEach(loisAndEnterCallMarkers::add);
 
-		final RegexDagNode<IIcfgTransition<IcfgLocation>> returnDagNode =
-				regexToDag.add(peComputer.exprBetween(entry, procedureGraph.getExitNode()));
+		final RegexDagNode<IIcfgTransition<IcfgLocation>> returnDagNode = regexToDag.add(markRegex(
+					peComputer.exprBetween(entry, procedureGraph.getExitNode()), procedureGraph.getExitNode()));
 
 		mRegexDag = regexToDag.getDag();
 		new RegexDagCompressor<IIcfgTransition<IcfgLocation>>().compress(mRegexDag);
@@ -90,7 +95,7 @@ public class ProcedureResources {
 		loisAndEnterCallMarkers.stream()
 				.forEach(mDagOverlayPathToLOIsAndEnterCalls::addExclusive);
 		mDagOverlayPathToReturn = new BackwardClosedOverlay<>();
-		mDagOverlayPathToReturn.addInclusive(returnDagNode);
+		mDagOverlayPathToReturn.addExclusive(returnDagNode);
 	}
 
 	/**  Marks a regex by appending a marker literal based on a location. */
