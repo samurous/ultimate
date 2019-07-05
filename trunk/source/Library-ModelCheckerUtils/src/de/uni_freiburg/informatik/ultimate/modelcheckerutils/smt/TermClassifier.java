@@ -54,12 +54,22 @@ public class TermClassifier extends NonRecursive {
 	private final Set<Integer> mOccuringQuantifiers;
 	private boolean mHasArrays;
 
+	private int mNumberOfVariables;
+	private int mNumberOfFunctions;
+	private int mNumberOfQuantifiers;
+
+	private String mTerm;
+
 	public TermClassifier() {
 		super();
 		mOccuringSortNames = new HashSet<>();
 		mOccuringFunctionNames = new HashSet<>();
 		mOccuringQuantifiers = new HashSet<>();
 		mHasArrays = false;
+		mNumberOfVariables = 0;
+		mNumberOfFunctions = 0;
+		mNumberOfQuantifiers = 0;
+		mTerm = "";
 	}
 
 	public Set<String> getOccuringSortNames() {
@@ -74,8 +84,36 @@ public class TermClassifier extends NonRecursive {
 		return mOccuringQuantifiers;
 	}
 
+	public int getNumberOfVariables() {
+		return mNumberOfVariables;
+	}
+
+	public int getNumberOfFunctions() {
+		return mNumberOfFunctions;
+	}
+
+	public int getNumberOfQuantifiers() {
+		return mNumberOfQuantifiers;
+	}
+
 	public boolean hasArrays() {
 		return mHasArrays;
+	}
+
+	public String getTerm() {
+		return mTerm;
+	}
+
+	public String getStats() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("Formula ").append(mTerm).append("\n");
+		sb.append("Occuring sorts ").append(mOccuringSortNames.toString()).append("\n");
+		sb.append("Occuring functions  ").append(mOccuringFunctionNames.toString()).append("\n");
+		sb.append("Occuring Quantifiers  ").append(mOccuringQuantifiers.toString()).append("\n");
+		sb.append("Number of functions ").append(mNumberOfFunctions).append("\n");
+		sb.append("Number of quantifiers ").append(mNumberOfQuantifiers).append("\n");
+		sb.append("Number of variables ").append(mNumberOfVariables).append("\n");
+		return sb.toString();
 	}
 
 	/**
@@ -83,6 +121,7 @@ public class TermClassifier extends NonRecursive {
 	 */
 	public void checkTerm(final Term term) {
 		mTermsInWhichWeAlreadyDescended = new HashSet<>();
+		mTerm = term.toString();
 		run(new MyWalker(term));
 		mTermsInWhichWeAlreadyDescended = null;
 	}
@@ -120,6 +159,8 @@ public class TermClassifier extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			mOccuringFunctionNames.add(term.getFunction().getName());
+			mNumberOfFunctions += 1;
+			mNumberOfVariables += term.getFreeVars().length;
 			mTermsInWhichWeAlreadyDescended.add(term);
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new MyWalker(t));
@@ -139,6 +180,7 @@ public class TermClassifier extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			mOccuringQuantifiers.add(term.getQuantifier());
+			mNumberOfQuantifiers += 1;
 			walker.enqueueWalker(new MyWalker(term.getSubformula()));
 		}
 
