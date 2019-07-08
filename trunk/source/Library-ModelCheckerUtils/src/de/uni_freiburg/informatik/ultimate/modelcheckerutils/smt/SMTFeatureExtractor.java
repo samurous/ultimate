@@ -20,7 +20,7 @@ public class SMTFeatureExtractor {
 		mFeatures = new ArrayList<>();
 	}
 
-	public void extractFeature(Term[] terms, double time) {
+	public void extractFeature(Term[] terms, double time) throws IllegalAccessException {
 		mLogger.warn("Extracting feature..");
 		TermClassifier tc = new TermClassifier();
 		for (Term term : terms) {
@@ -35,8 +35,10 @@ public class SMTFeatureExtractor {
 		feature.mNumberOfFunctions = tc.getNumberOfFunctions();
 		feature.mNumberOfQuantifiers = tc.getNumberOfQuantifiers();
 		feature.mSolverTime = time;
-		mLogger.warn(feature.toString());
 		mFeatures.add(feature);
+		mLogger.warn(feature.toCsv(";"));
+		
 	}
+	
 
 }

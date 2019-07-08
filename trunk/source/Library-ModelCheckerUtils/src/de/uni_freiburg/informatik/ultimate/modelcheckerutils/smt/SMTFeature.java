@@ -27,6 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.awt.List;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Set;
 
@@ -62,4 +65,16 @@ public class SMTFeature {
 		sb.append(mSolverTime);
 		return sb.toString();
 	}
+	
+	public String toCsv(String delimiter) throws IllegalAccessException {
+		StringBuilder sb = new StringBuilder();
+		Field[] fields = getClass().getDeclaredFields();
+		ArrayList<String> values = new ArrayList<String>();
+		for (Field field : fields) {
+			values.add((String) field.get(this));
+		}
+		sb.append(String.join(delimiter,values));
+		return sb.toString();
+	}
+	
 }
