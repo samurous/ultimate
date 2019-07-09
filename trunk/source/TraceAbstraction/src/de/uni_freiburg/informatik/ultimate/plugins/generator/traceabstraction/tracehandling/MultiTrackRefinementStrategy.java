@@ -404,7 +404,9 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		}
 		Script solver = SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings, false, false,
 				logicForExternalSolver, "TraceCheck_Iteration" + mTaskIdentifier);
-		solver = new SMTFeatureExtractorScript(solver, mLogger, mServices);
+		if(mTaPrefsForInterpolantConsolidation.useSMTFeatureExtraction()) {
+			solver = new SMTFeatureExtractorScript(solver, mLogger, mServices, mTaPrefsForInterpolantConsolidation.getSMTFeatureExtractionDumpPath());
+		}
 		final ManagedScript result = new ManagedScript(services, solver);
 		prefs.getIcfgContainer().getCfgSmtToolkit().getSmtSymbols().transferSymbols(solver);
 		return result;
