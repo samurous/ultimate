@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.IcfgInterpreter;
 import de.uni_freiburg.informatik.ultimate.lib.symbolicinterpretation.SymbolicTools;
@@ -54,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
+ * Starts symbolic interpretation on an icfg.
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Claus Schätzle (schaetzc@tf.uni-freiburg.de)
  */
@@ -78,12 +81,13 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 	}
 
 	private void processIcfg(final IIcfg<IcfgLocation> icfg) {
+		final IProgressMonitorService timer = mServices.getProgressMonitorService();
 		final SymbolicTools tools = new SymbolicTools(mServices, icfg);
 		final IDomain domain = new ExplicitValueDomain(mServices, tools);
 		final IFluid fluid = new LogSizeWrapperFluid(mLogger, new NeverFluid());
-		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, tools,
+		final IcfgInterpreter icfgInterpreter = new IcfgInterpreter(mLogger, timer, tools,
 				icfg, IcfgInterpreter.allErrorLocations(icfg), domain, fluid,
-				icfgIpr -> dagIpr -> new FixpointLoopSummarizer(mLogger, domain, dagIpr),
+				icfgIpr -> dagIpr -> new FixpointLoopSummarizer(mLogger, timer, tools, domain, dagIpr),
 				icfgIpr -> dagIpr -> new TopInputCallSummarizer(tools, icfgIpr.procedureResourceCache(), dagIpr));
 		final Map<IcfgLocation, IPredicate> predicates = icfgInterpreter.interpret();
 		mLogger.debug("Final results are " + predicates);
@@ -112,29 +116,11 @@ public class SymbolicInterpretationObserver extends BaseObserver {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
 
-	private boolean allPredicatesAreFalse(final Map<IcfgLocation, IPredicate> predicates) {
-		return predicates.values().stream().allMatch(this::isFalse);
+	private static boolean allPredicatesAreFalse(final Map<IcfgLocation, IPredicate> predicates) {
+		return predicates.values().stream().allMatch(SymbolicInterpretationObserver::isFalse);
 	}
 
-	private boolean isFalse(final IPredicate predicate) {
+	private static boolean isFalse(final IPredicate predicate) {
 		return SmtUtils.isFalse(predicate.getFormula());
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
