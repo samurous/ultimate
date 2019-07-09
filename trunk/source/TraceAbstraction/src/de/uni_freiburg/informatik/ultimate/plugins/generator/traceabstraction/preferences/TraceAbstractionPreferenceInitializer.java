@@ -215,6 +215,17 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_HEURISTIC_EMPTINESS_CHECK = "Use heuristic emptiness check";
 	public static final boolean DEF_HEURISTIC_EMPTINESS_CHECK = false;
 	public static final String DESC_HEURISTIC_EMPTINESS_CHECK = "Use heuristics to traverse/explorew a NWA during the check emptiness";
+	
+	public static final String LABEL_SMT_FEATURE_EXTRACTION = "Extract SMT features during analysis";
+	public static final boolean DEF_SMT_FEATURE_EXTRACTION = false;
+	public static final String DESC_SMT_FEATURE_EXTRACTION = "We Extract SMT features during analysis and dump them.";
+	
+	public static final String LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH = "Extract SMT features during analysis";
+	public static final String DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH = "/tmp/";
+	public static final String DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH = "We Extract SMT features during analysis and dump them.";
+	
+	
+
 
 	/**
 	 * Constructor.
@@ -340,7 +351,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST, DESC_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 						PreferenceType.Combo, RefinementStrategyExceptionBlacklist.values()),
 				new UltimatePreferenceItem<>(LABEL_HEURISTIC_EMPTINESS_CHECK, DEF_HEURISTIC_EMPTINESS_CHECK,
-						DESC_HEURISTIC_EMPTINESS_CHECK, PreferenceType.Boolean), };
+						DESC_HEURISTIC_EMPTINESS_CHECK, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION, DEF_SMT_FEATURE_EXTRACTION,
+						DESC_SMT_FEATURE_EXTRACTION, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SMT_FEATURE_EXTRACTION_DUMP_PATH, DEF_SMT_FEATURE_EXTRACTION_DUMP_PATH,
+						DESC_SMT_FEATURE_EXTRACTION_DUMP_PATH, PreferenceType.Directory),};
 
 	}
 
