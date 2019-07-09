@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -45,14 +46,19 @@ public class SMTFeatureExtractor {
 		feature.mSolverTime = time;
 		mFeatures.add(feature);
 		dumpFeature(feature);
+		
 	}
 	
 	public void dumpFeature(SMTFeature feature) throws IllegalAccessException, IOException {
 		mLogger.warn("Writing to file");
-		File file = new File(mDumpPath + "smtfeatures.csv");
-		FileWriter writer = new FileWriter(file);
-		writer.write("Test data");
-		writer.close();
+		try(FileWriter fw = new FileWriter(mDumpPath + "smtfeatures.csv", true);
+			    BufferedWriter bw = new BufferedWriter(fw);
+			    PrintWriter out = new PrintWriter(bw))
+			{
+			    out.println(feature + "\n");
+			} catch (IOException e) {
+				throw new IOException(e);
+			}
 	}
 
 }
