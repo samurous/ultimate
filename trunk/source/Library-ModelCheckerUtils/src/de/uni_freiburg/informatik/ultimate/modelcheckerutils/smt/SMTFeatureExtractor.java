@@ -1,5 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,14 +19,16 @@ public class SMTFeatureExtractor {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final List<SMTFeature> mFeatures;
+	private final String mDumpPath;
 
-	public SMTFeatureExtractor(ILogger logger, IUltimateServiceProvider services) {
+	public SMTFeatureExtractor(ILogger logger, IUltimateServiceProvider services, String dump_path) {
 		mLogger = logger;
 		mServices = services;
 		mFeatures = new ArrayList<>();
+		mDumpPath = dump_path;
 	}
 
-	public void extractFeature(Term[] terms, double time) throws IllegalAccessException {
+	public void extractFeature(Term[] terms, double time) throws IllegalAccessException, IOException {
 		mLogger.warn("Extracting feature..");
 		TermClassifier tc = new TermClassifier();
 		for (Term term : terms) {
@@ -36,9 +44,15 @@ public class SMTFeatureExtractor {
 		feature.mNumberOfQuantifiers = tc.getNumberOfQuantifiers();
 		feature.mSolverTime = time;
 		mFeatures.add(feature);
-		mLogger.warn(feature.toCsv(";"));
-		
+		dumpFeature(feature);
 	}
 	
+	public void dumpFeature(SMTFeature feature) throws IllegalAccessException, IOException {
+		mLogger.warn("Writing to file");
+		File file = new File(mDumpPath + "smtfeatures.csv");
+		FileWriter writer = new FileWriter(file);
+		writer.write("Test data");
+		writer.close();
+	}
 
 }

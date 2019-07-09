@@ -69,10 +69,13 @@ public class SMTFeature {
 	public String toCsv(String delimiter) throws IllegalAccessException {
 		StringBuilder sb = new StringBuilder();
 		Field[] fields = getClass().getDeclaredFields();
+		//ArrayList<String> names = new ArrayList<String>();
 		ArrayList<String> values = new ArrayList<String>();
 		for (Field field : fields) {
-			values.add((String) field.get(this));
+			//names.add(field.getName());
+			values.add(field.get(this).toString());
 		}
+		//sb.append(String.join(delimiter,names)+"\n");
 		sb.append(String.join(delimiter,values));
 		return sb.toString();
 	}

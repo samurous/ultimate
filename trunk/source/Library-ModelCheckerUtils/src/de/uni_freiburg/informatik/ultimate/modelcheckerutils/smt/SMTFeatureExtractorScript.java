@@ -1,5 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -17,11 +21,11 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 	 *
 	 * @param script The wrapped script.
 	 */
-	public SMTFeatureExtractorScript(Script script, ILogger logger, IUltimateServiceProvider services) {
+	public SMTFeatureExtractorScript(Script script, ILogger logger, IUltimateServiceProvider services, String dump_path) {
 		super(script);
 		mLogger = logger;
 		mServices = services;
-		mFeatureExtractor = new SMTFeatureExtractor(logger, services);
+		mFeatureExtractor = new SMTFeatureExtractor(logger, services, dump_path);
 	}
 
 	@Override
@@ -32,7 +36,7 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 		Term[] assertions = super.mScript.getAssertions();
 		try {
 			mFeatureExtractor.extractFeature(assertions, analysisTime);
-		} catch (IllegalAccessException e) {
+		} catch (IllegalAccessException | IOException e) {
 			mLogger.error(e);
 		}
 		return sat;
