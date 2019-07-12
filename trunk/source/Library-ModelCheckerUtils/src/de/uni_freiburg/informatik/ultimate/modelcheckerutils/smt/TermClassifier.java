@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
  * Check for a bunch of criteria if they are satisfied by a given {@link Term}.
@@ -57,6 +58,7 @@ public class TermClassifier extends NonRecursive {
 	private int mNumberOfVariables;
 	private int mNumberOfFunctions;
 	private int mNumberOfQuantifiers;
+	private int mSize;
 
 	private String mTerm;
 
@@ -69,6 +71,7 @@ public class TermClassifier extends NonRecursive {
 		mNumberOfVariables = 0;
 		mNumberOfFunctions = 0;
 		mNumberOfQuantifiers = 0;
+		mSize = 0;
 		mTerm = "";
 	}
 
@@ -103,6 +106,9 @@ public class TermClassifier extends NonRecursive {
 	public String getTerm() {
 		return mTerm;
 	}
+	public int getSize() {
+		return mSize;
+	}
 
 	public String getStats() {
 		StringBuilder sb = new StringBuilder();
@@ -110,6 +116,7 @@ public class TermClassifier extends NonRecursive {
 		sb.append("Occuring sorts ").append(mOccuringSortNames.toString()).append("\n");
 		sb.append("Occuring functions  ").append(mOccuringFunctionNames.toString()).append("\n");
 		sb.append("Occuring Quantifiers  ").append(mOccuringQuantifiers.toString()).append("\n");
+		sb.append("Size  ").append(mSize).append("\n");
 		sb.append("Number of functions ").append(mNumberOfFunctions).append("\n");
 		sb.append("Number of quantifiers ").append(mNumberOfQuantifiers).append("\n");
 		sb.append("Number of variables ").append(mNumberOfVariables).append("\n");
@@ -122,6 +129,7 @@ public class TermClassifier extends NonRecursive {
 	public void checkTerm(final Term term) {
 		mTermsInWhichWeAlreadyDescended = new HashSet<>();
 		mTerm = term.toString();
+		mSize = new DAGSize().size(term);
 		run(new MyWalker(term));
 		mTermsInWhichWeAlreadyDescended = null;
 	}

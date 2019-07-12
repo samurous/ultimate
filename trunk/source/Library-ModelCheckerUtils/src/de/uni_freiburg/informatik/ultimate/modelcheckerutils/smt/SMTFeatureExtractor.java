@@ -13,6 +13,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class SMTFeatureExtractor {
 
@@ -21,12 +22,14 @@ public class SMTFeatureExtractor {
 	private final ILogger mLogger;
 	private final List<SMTFeature> mFeatures;
 	private final String mDumpPath;
+	private final DAGSize mDAGSize;
 
 	public SMTFeatureExtractor(ILogger logger, IUltimateServiceProvider services, String dump_path) {
 		mLogger = logger;
 		mServices = services;
 		mFeatures = new ArrayList<>();
 		mDumpPath = dump_path;
+		mDAGSize = new DAGSize();
 	}
 
 	public void extractFeature(Term[] terms, double time) throws IllegalAccessException, IOException {
@@ -43,7 +46,9 @@ public class SMTFeatureExtractor {
 		feature.mOccuringSorts = tc.getOccuringSortNames();
 		feature.mNumberOfFunctions = tc.getNumberOfFunctions();
 		feature.mNumberOfQuantifiers = tc.getNumberOfQuantifiers();
+		feature.mSize = tc.getSize();
 		feature.mSolverTime = time;
+		mLogger.warn(tc.getStats());
 		mFeatures.add(feature);
 		dumpFeature(feature);
 		
@@ -55,7 +60,7 @@ public class SMTFeatureExtractor {
 			    BufferedWriter bw = new BufferedWriter(fw);
 			    PrintWriter out = new PrintWriter(bw))
 			{
-			    out.println(feature + "\n");
+			    out.println(feature);
 			} catch (IOException e) {
 				throw new IOException(e);
 			}

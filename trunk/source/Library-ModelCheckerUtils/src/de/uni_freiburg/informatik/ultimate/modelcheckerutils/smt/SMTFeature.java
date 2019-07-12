@@ -42,6 +42,7 @@ import java.util.Set;
 public class SMTFeature {
 	public int mNumberOfFunctions = 0;
 	public int mNumberOfQuantifiers = 0;
+	public int mSize = 0;
 
 	public Set<String> mOccuringSorts = Collections.emptySet();
 	public Set<String> mOccuringFunctions = Collections.emptySet();
@@ -58,6 +59,7 @@ public class SMTFeature {
 		sb.append(mFormula).append(",");
 		sb.append(mNumberOfFunctions).append(",");
 		sb.append(mNumberOfQuantifiers).append(",");
+		sb.append(mSize).append(",");
 		sb.append(mOccuringFunctions).append(",");
 		sb.append(mOccuringSorts).append(",");
 		sb.append(mOccuringQuantifiers).append(",");
