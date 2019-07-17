@@ -47,9 +47,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Summarizes loops by iterating them until a fixpoint is reached.
- * Fixpoint iteration works as in classical abstract interpretation.
- * Widening is used to ensure that the iteration eventually reaches a fixpoint.
+ * Summarizes loops by iterating them until a fixpoint is reached. Fixpoint iteration works as in classical abstract
+ * interpretation. Widening is used to ensure that the iteration eventually reaches a fixpoint.
  *
  * @author schaetzc@tf.uni-freiburg.de
  */
@@ -86,7 +85,7 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 		mLogger.debug("Computing new loop summary for input " + starAndInput.getValue());
 		final IRegex<IIcfgTransition<IcfgLocation>> starredRegex = starAndInput.getFirst().getInner();
 		final RegexDag<IIcfgTransition<IcfgLocation>> dag = mStarDagCache.dagOf(starredRegex);
-		// TODO don't use full overlay as it may include enter calls
+		// Enter calls are dead ends, therefore the inner regex of (…)* cannot contain enter calls
 		final IDagOverlay<IIcfgTransition<IcfgLocation>> fullOverlay = new FullOverlay<>();
 		IPredicate preState = starAndInput.getSecond();
 		IPredicate postState = null;
@@ -95,20 +94,11 @@ public class FixpointLoopSummarizer implements ILoopSummarizer {
 				mLogger.warn("Timeout while computing loop summary. Using top as a loop summary.");
 				return mTools.top();
 			}
-			// TODO catch TimeoutException from dagInterpreter or pass a custom ProgressAwareTimer?
-			// ... one the other hand, the global timeout should always be greater than this object's timeout.
-			// A custom ProgressAwareTimer would be good anyways.
 			postState = mDagIpr.interpret(dag, fullOverlay, preState);
-			// workaround non-termination in "enter-call-in-loop-2.bpl".
-			// TODO really check isSubsetEq twice? Isn't there a better way?
-			if (mDomain.isSubsetEq(preState, postState)) {
+			if (mDomain.isSubsetEq(postState, preState)) {
 				break;
 			}
-			postState = mDomain.widen(preState, postState);
-			if (mDomain.isSubsetEq(preState, postState)) {
-				break;
-			}
-			preState = postState;
+			preState = mDomain.widen(preState, postState);
 		}
 		return postState;
 	}
