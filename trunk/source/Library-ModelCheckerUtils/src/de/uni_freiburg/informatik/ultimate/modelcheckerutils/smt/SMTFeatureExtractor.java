@@ -55,12 +55,12 @@ public class SMTFeatureExtractor {
 	}
 	
 	public void dumpFeature(SMTFeature feature) throws IllegalAccessException, IOException {
-		mLogger.warn("Writing to file");
+		mLogger.warn("Writing to file:" + mDumpPath + "smtfeatures.csv");
 		try(FileWriter fw = new FileWriter(mDumpPath + "smtfeatures.csv", true);
 			    BufferedWriter bw = new BufferedWriter(fw);
 			    PrintWriter out = new PrintWriter(bw))
 			{
-			    out.println(feature);
+			    out.println(feature.toCsv(";"));
 			} catch (IOException e) {
 				throw new IOException(e);
 			}
