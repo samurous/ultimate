@@ -138,20 +138,34 @@ public class TermClassifier extends NonRecursive {
 		MyWalker(final Term term) {
 			super(term);
 		}
-
+		
 		@Override
 		public void walk(final NonRecursive walker) {
 			if (mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
 				// do nothing
 			} else {
-				final Sort currentSort = getTerm().getSort();
-				mOccuringSortNames.add(currentSort.getName());
-				if (currentSort.isArraySort()) {
-					mHasArrays = true;
-				}
+			    Term term = getTerm();
+			    boolean add_sort = false;
+			    // Add sorts only if term is TermVariable or ApplicationTerm with arity 0.
+			    if (term instanceof TermVariable) {
+			    	add_sort = true;
+			    }else if (term instanceof ApplicationTerm) {
+			    	ApplicationTerm appterm = (ApplicationTerm) term;
+			    	if(appterm.getParameters().length == 0) {
+			    		add_sort = true;
+			    	}
+			    }
+			    if(add_sort) {
+			    	final Sort currentSort = getTerm().getSort();
+			    	mOccuringSortNames.add(currentSort.getName());
+			    	if (currentSort.isArraySort()) {
+			    		mHasArrays = true;
+			    	}
+			    }
 				super.walk(walker);
 			}
 		}
+		
 
 		@Override
 		public void walk(final NonRecursive walker, final ConstantTerm term) {
