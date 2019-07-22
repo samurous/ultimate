@@ -31,7 +31,7 @@ public class SMTFeatureExtractor {
 		mServices = services;
 		mFeatures = new ArrayList<>();
 		mDumpPath = dump_path;
-		String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern( "uuuu-MM-dd-HH-mm" ));
+		String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern( "uuuu-MM-dd" ));
 		mFilename = mDumpPath + timestamp + "-smtfeatures.csv"; 
 	}
 
@@ -64,6 +64,7 @@ public class SMTFeatureExtractor {
 			    BufferedWriter bw = new BufferedWriter(fw);
 			    PrintWriter out = new PrintWriter(bw))
 			{
+			    mLogger.warn(feature.getCsvHeader(";"));
 			    out.println(feature.toCsv(";"));
 			} catch (IOException e) {
 				throw new IOException(e);
