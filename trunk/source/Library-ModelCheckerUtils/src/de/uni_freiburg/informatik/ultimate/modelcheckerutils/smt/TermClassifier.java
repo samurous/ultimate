@@ -156,13 +156,15 @@ public class TermClassifier extends NonRecursive {
 			    Term term = getTerm();
 			    boolean add = false;
 			    // Add sorts only if term is TermVariable or ApplicationTerm with arity 0.
-			    if (term instanceof TermVariable) {
-			    	add = true;
-			    }else if (term instanceof ApplicationTerm) {
-			    	ApplicationTerm appterm = (ApplicationTerm) term;
-			    	if(appterm.getParameters().length == 0) {
-			    		add = true;
-			    	}
+			    if(!term.toStringDirect().equals("true") && !term.toStringDirect().equals("false")) {
+			    	if (term instanceof TermVariable) {
+				    	add = true;
+				    }else if (term instanceof ApplicationTerm) {
+				    	ApplicationTerm appterm = (ApplicationTerm) term;
+				    	if(appterm.getParameters().length == 0) {
+				    		add = true;
+				    	}
+				    }
 			    }
 			    if(add) {
 			    	final Sort currentSort = term.getSort();

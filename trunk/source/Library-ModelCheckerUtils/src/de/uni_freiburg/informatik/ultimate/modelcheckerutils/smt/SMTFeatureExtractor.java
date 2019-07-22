@@ -7,6 +7,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,12 +24,15 @@ public class SMTFeatureExtractor {
 	private final ILogger mLogger;
 	private final List<SMTFeature> mFeatures;
 	private final String mDumpPath;
+	private final String mFilename;
 
 	public SMTFeatureExtractor(ILogger logger, IUltimateServiceProvider services, String dump_path) {
 		mLogger = logger;
 		mServices = services;
 		mFeatures = new ArrayList<>();
 		mDumpPath = dump_path;
+		String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern( "uuuu-MM-dd-HH-mm" ));
+		mFilename = mDumpPath + timestamp + "-smtfeatures.csv"; 
 	}
 
 	public void extractFeature(Term[] terms, double time) throws IllegalAccessException, IOException {
@@ -54,8 +59,8 @@ public class SMTFeatureExtractor {
 	}
 	
 	public void dumpFeature(SMTFeature feature) throws IllegalAccessException, IOException {
-		mLogger.warn("Writing to file:" + mDumpPath + "smtfeatures.csv");
-		try(FileWriter fw = new FileWriter(mDumpPath + "smtfeatures.csv", true);
+		mLogger.warn("Writing to file:" + mFilename);
+		try(FileWriter fw = new FileWriter(mFilename, true);
 			    BufferedWriter bw = new BufferedWriter(fw);
 			    PrintWriter out = new PrintWriter(bw))
 			{
