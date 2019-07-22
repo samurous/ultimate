@@ -165,8 +165,8 @@ public class TermClassifier extends NonRecursive {
 			    	}
 			    }
 			    if(add) {
-			    	final Sort currentSort = getTerm().getSort();
-			    	mOccuringSortNames.add(currentSort.getName());
+			    	final Sort currentSort = term.getSort();
+			    	mOccuringSortNames.add(currentSort.toString());
 			    	if (currentSort.isArraySort()) {
 			    		mHasArrays = true;
 					}
@@ -192,9 +192,9 @@ public class TermClassifier extends NonRecursive {
 	    	if(term.getParameters().length > 0) {
 	    		mOccuringFunctionNames.add(term.getFunction().getName());			
 	    		mNumberOfFunctions += 1;
+	    	}else {	    	
+	    		mNumberOfVariables += 1;
 	    	}
-	    	
-			mNumberOfVariables += term.getFreeVars().length;
 			
 			mTermsInWhichWeAlreadyDescended.add(term);
 			for (final Term t : term.getParameters()) {
