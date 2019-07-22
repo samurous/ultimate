@@ -22,20 +22,19 @@ public class SMTFeatureExtractor {
 	private final ILogger mLogger;
 	private final List<SMTFeature> mFeatures;
 	private final String mDumpPath;
-	private final DAGSize mDAGSize;
 
 	public SMTFeatureExtractor(ILogger logger, IUltimateServiceProvider services, String dump_path) {
 		mLogger = logger;
 		mServices = services;
 		mFeatures = new ArrayList<>();
 		mDumpPath = dump_path;
-		mDAGSize = new DAGSize();
 	}
 
 	public void extractFeature(Term[] terms, double time) throws IllegalAccessException, IOException {
 		mLogger.warn("Extracting feature..");
 		TermClassifier tc = new TermClassifier();
 		for (Term term : terms) {
+			mLogger.warn(term.toString());
 			tc.checkTerm(term);
 		}
 		SMTFeature feature = new SMTFeature();
@@ -46,7 +45,7 @@ public class SMTFeatureExtractor {
 		feature.mOccuringSorts = tc.getOccuringSortNames();
 		feature.mNumberOfFunctions = tc.getNumberOfFunctions();
 		feature.mNumberOfQuantifiers = tc.getNumberOfQuantifiers();
-		feature.mSize = tc.getSize();
+		feature.mDAGSize = tc.getDAGSize();
 		feature.mSolverTime = time;
 		mLogger.warn(tc.getStats());
 		mFeatures.add(feature);

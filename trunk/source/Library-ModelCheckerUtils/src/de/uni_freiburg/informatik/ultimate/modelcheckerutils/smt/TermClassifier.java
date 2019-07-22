@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -58,9 +59,10 @@ public class TermClassifier extends NonRecursive {
 	private int mNumberOfVariables;
 	private int mNumberOfFunctions;
 	private int mNumberOfQuantifiers;
-	private int mSize;
+	private int mDAGSize;
+	private long mTreeSize;
 
-	private String mTerm;
+	private ArrayList<String> mTerms;
 
 	public TermClassifier() {
 		super();
@@ -71,8 +73,9 @@ public class TermClassifier extends NonRecursive {
 		mNumberOfVariables = 0;
 		mNumberOfFunctions = 0;
 		mNumberOfQuantifiers = 0;
-		mSize = 0;
-		mTerm = "";
+		mDAGSize = 0;
+		mTreeSize = 0;
+		mTerms = new ArrayList<String>();
 	}
 
 	public Set<String> getOccuringSortNames() {
@@ -103,20 +106,25 @@ public class TermClassifier extends NonRecursive {
 		return mHasArrays;
 	}
 
-	public String getTerm() {
-		return mTerm;
+	public ArrayList<String> getTerm() {
+		return mTerms;
 	}
-	public int getSize() {
-		return mSize;
+	public int getDAGSize() {
+		return mDAGSize;
+	}
+	
+	public long getTreeSize() {
+		return mTreeSize;
 	}
 
 	public String getStats() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Formula ").append(mTerm).append("\n");
+		sb.append("Formula ").append(mTerms).append("\n");
 		sb.append("Occuring sorts ").append(mOccuringSortNames.toString()).append("\n");
 		sb.append("Occuring functions  ").append(mOccuringFunctionNames.toString()).append("\n");
 		sb.append("Occuring Quantifiers  ").append(mOccuringQuantifiers.toString()).append("\n");
-		sb.append("Size  ").append(mSize).append("\n");
+		sb.append("DAGSize  ").append(mDAGSize).append("\n");
+		sb.append("TreeSize  ").append(mTreeSize).append("\n");
 		sb.append("Number of functions ").append(mNumberOfFunctions).append("\n");
 		sb.append("Number of quantifiers ").append(mNumberOfQuantifiers).append("\n");
 		sb.append("Number of variables ").append(mNumberOfVariables).append("\n");
@@ -128,8 +136,9 @@ public class TermClassifier extends NonRecursive {
 	 */
 	public void checkTerm(final Term term) {
 		mTermsInWhichWeAlreadyDescended = new HashSet<>();
-		mTerm = term.toString();
-		mSize = new DAGSize().size(term);
+		mTerms.add(term.toString());
+		mDAGSize += new DAGSize().size(term);
+		mTreeSize += new DAGSize().treesize(term);
 		run(new MyWalker(term));
 		mTermsInWhichWeAlreadyDescended = null;
 	}
@@ -145,22 +154,22 @@ public class TermClassifier extends NonRecursive {
 				// do nothing
 			} else {
 			    Term term = getTerm();
-			    boolean add_sort = false;
+			    boolean add = false;
 			    // Add sorts only if term is TermVariable or ApplicationTerm with arity 0.
 			    if (term instanceof TermVariable) {
-			    	add_sort = true;
+			    	add = true;
 			    }else if (term instanceof ApplicationTerm) {
 			    	ApplicationTerm appterm = (ApplicationTerm) term;
 			    	if(appterm.getParameters().length == 0) {
-			    		add_sort = true;
+			    		add = true;
 			    	}
 			    }
-			    if(add_sort) {
+			    if(add) {
 			    	final Sort currentSort = getTerm().getSort();
 			    	mOccuringSortNames.add(currentSort.getName());
 			    	if (currentSort.isArraySort()) {
 			    		mHasArrays = true;
-			    	}
+					}
 			    }
 				super.walk(walker);
 			}
@@ -180,9 +189,13 @@ public class TermClassifier extends NonRecursive {
 
 		@Override
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
-			mOccuringFunctionNames.add(term.getFunction().getName());
-			mNumberOfFunctions += 1;
+	    	if(term.getParameters().length > 0) {
+	    		mOccuringFunctionNames.add(term.getFunction().getName());			
+	    		mNumberOfFunctions += 1;
+	    	}
+	    	
 			mNumberOfVariables += term.getFreeVars().length;
+			
 			mTermsInWhichWeAlreadyDescended.add(term);
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new MyWalker(t));

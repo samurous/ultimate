@@ -42,7 +42,9 @@ import java.util.Set;
 public class SMTFeature {
 	public int mNumberOfFunctions = 0;
 	public int mNumberOfQuantifiers = 0;
-	public int mSize = 0;
+	public int mDAGSize = 0;
+	public long mTreeSize = 0;
+
 
 	public Set<String> mOccuringSorts = Collections.emptySet();
 	public Set<String> mOccuringFunctions = Collections.emptySet();
@@ -50,7 +52,7 @@ public class SMTFeature {
 
 	public boolean mContainsArrays = false;
 
-	public String mFormula = "";
+	public ArrayList<String> mFormula = new ArrayList<String>();
 	public double mSolverTime = 0.0;
 
 	@Override
@@ -59,7 +61,8 @@ public class SMTFeature {
 		sb.append(mFormula).append(",");
 		sb.append(mNumberOfFunctions).append(",");
 		sb.append(mNumberOfQuantifiers).append(",");
-		sb.append(mSize).append(",");
+		sb.append(mDAGSize).append(",");
+		sb.append(mTreeSize).append(",");
 		sb.append(mOccuringFunctions).append(",");
 		sb.append(mOccuringSorts).append(",");
 		sb.append(mOccuringQuantifiers).append(",");
