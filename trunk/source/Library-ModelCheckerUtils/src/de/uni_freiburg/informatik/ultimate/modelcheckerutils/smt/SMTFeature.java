@@ -53,6 +53,7 @@ public class SMTFeature {
 	public boolean mContainsArrays = false;
 
 	public ArrayList<String> mFormula = new ArrayList<String>();
+	public String mResult = "";
 	public double mSolverTime = 0.0;
 
 	@Override
@@ -67,6 +68,7 @@ public class SMTFeature {
 		sb.append(mOccuringSorts).append(",");
 		sb.append(mOccuringQuantifiers).append(",");
 		sb.append(mContainsArrays).append(",");
+		sb.append(mResult).append(",");
 		sb.append(mSolverTime);
 		return sb.toString();
 	}

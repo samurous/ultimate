@@ -35,7 +35,7 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 		final double analysisTime = (System.nanoTime() - start) / 1000;
 		Term[] assertions = super.mScript.getAssertions();
 		try {
-			mFeatureExtractor.extractFeature(assertions, analysisTime);
+			mFeatureExtractor.extractFeature(assertions, analysisTime, sat.toString());
 		} catch (IllegalAccessException | IOException e) {
 			mLogger.error(e);
 		}

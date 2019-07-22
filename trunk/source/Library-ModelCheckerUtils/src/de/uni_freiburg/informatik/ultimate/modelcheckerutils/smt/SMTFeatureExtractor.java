@@ -35,7 +35,7 @@ public class SMTFeatureExtractor {
 		mFilename = mDumpPath + timestamp + "-smtfeatures.csv"; 
 	}
 
-	public void extractFeature(Term[] terms, double time) throws IllegalAccessException, IOException {
+	public void extractFeature(Term[] terms, double time, String result) throws IllegalAccessException, IOException {
 		mLogger.warn("Extracting feature..");
 		TermClassifier tc = new TermClassifier();
 		for (Term term : terms) {
@@ -51,8 +51,11 @@ public class SMTFeatureExtractor {
 		feature.mNumberOfFunctions = tc.getNumberOfFunctions();
 		feature.mNumberOfQuantifiers = tc.getNumberOfQuantifiers();
 		feature.mDAGSize = tc.getDAGSize();
+		feature.mResult = result;
 		feature.mSolverTime = time;
 		mLogger.warn(tc.getStats());
+		mLogger.warn(result);
+		mLogger.warn(time);
 		mFeatures.add(feature);
 		dumpFeature(feature);
 		
