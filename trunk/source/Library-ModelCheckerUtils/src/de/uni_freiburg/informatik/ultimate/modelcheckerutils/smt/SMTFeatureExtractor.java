@@ -51,6 +51,7 @@ public class SMTFeatureExtractor {
 		feature.mNumberOfFunctions = tc.getNumberOfFunctions();
 		feature.mNumberOfQuantifiers = tc.getNumberOfQuantifiers();
 		feature.mDAGSize = tc.getDAGSize();
+		feature.mTreeSize = tc.getTreeSize();
 		feature.mResult = result;
 		feature.mSolverTime = time;
 		mLogger.warn(tc.getStats());
