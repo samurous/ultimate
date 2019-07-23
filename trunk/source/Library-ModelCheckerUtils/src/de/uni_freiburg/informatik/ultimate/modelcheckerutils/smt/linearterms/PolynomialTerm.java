@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms;
 
 import java.math.BigInteger;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -12,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.PolynomialTermUtils.GeneralizedConstructor;
 
 /**
@@ -66,13 +64,13 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		return PolynomialTermUtils.constructMul(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor,
 												polynomialTerm, multiplier);
 	}
-	
+
 	/**
 	 * The given arguments specify a Term. This constructor determines whether it must be represented by the
 	 * PolynomialTerm class, or if the AffineTerm class is sufficient (more storage efficiency). Afterwards
 	 * it returns this Term represented by one of the two classes, chosen accordingly.
 	 */
-	private static IPolynomialTerm minimalRepresentation(Sort sort, Rational coeff, Map<Monomial, Rational> map) {
+	private static AbstractGeneralizedAffineTerm<?> minimalRepresentation(final Sort sort, final Rational coeff, final Map<Monomial, Rational> map) {
 		if (PolynomialTermUtils.isAffineMap(map)) {
 			return new AffineTerm(sort, coeff, PolynomialTermUtils.convertToAffineMap(map));
 		}
@@ -183,10 +181,10 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	/**
 	 * Returns the sum of given polynomials.
 	 */
-	public static IPolynomialTerm sum(final IPolynomialTerm... summands) {
-		final GeneralizedConstructor<Monomial, IPolynomialTerm> constructor = PolynomialTerm::minimalRepresentation;
-		return PolynomialTermUtils.constructSum(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), 
-												constructor, summands);
+	public static AbstractGeneralizedAffineTerm<?> sum(final IPolynomialTerm... summands) {
+		final GeneralizedConstructor<Monomial, AbstractGeneralizedAffineTerm<?>> constructor = PolynomialTerm::minimalRepresentation;
+		return PolynomialTermUtils.constructSum(x -> ((PolynomialTerm) x).getMonomial2Coefficient(), constructor,
+				summands);
 	}
 
 	/**
@@ -195,14 +193,14 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 */
 	public static IPolynomialTerm divide(final IPolynomialTerm[] polynomialTerms, final Script script) {
 		if (!divisionPossible(polynomialTerms)) {
-			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this 
+			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this
 			//whole term as an unique variable.
 			final Term term = PolynomialTermUtils.constructIteratedTerm("/", polynomialTerms, script);
 			return AffineTerm.constructVariable(term);
 		}
 		return constructDivision(polynomialTerms);
 	}
-	
+
 	/**
 	 * Construct the division of the given polynomialTerms.
 	 */
@@ -213,7 +211,7 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		}
 		return poly;
 	}
-	
+
 	/**
 	 * Given an array of polynomialTerms, this determines whether a division is actually possible at the moment.
 	 * If it is return true, false otherwise.
@@ -226,14 +224,14 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Returns a PolynomialTerm which represents the integral quotient of the given arguments (see
 	 * {@PolynomialTermTransformer #div(Sort, IPolynomialTerm[])}).
 	 */
 	public static IPolynomialTerm div(final IPolynomialTerm[] polynomialArgs, final Script script) {
 		if (!divisionPossible(polynomialArgs)) {
-			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this 
+			//In case we cannot handle this division properly (e.g. dividing by variables) we treat this
 			//whole term as an unique variable.
 			final Term term = PolynomialTermUtils.constructIteratedTerm("div", polynomialArgs, script);
 			return AffineTerm.constructVariable(term);
@@ -262,6 +260,11 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 		return mAbstractVariable2Coefficient;
 	}
 
+	@Override
+	public Map<Term, Rational> getVariable2Coefficient() {
+		throw new UnsupportedOperationException("This PolynomialTerm has no Map in this representation.");
+	}
+
 	/**
 	 * @return true iff var is a variable of this {@link PolynomialTerm} (i.e., if var is a variable of some
 	 *         {@link Monomial} that has a non-zero coefficient) Note that for returning true it is especially NOT
@@ -269,7 +272,12 @@ public class PolynomialTerm extends AbstractGeneralizedAffineTerm<Monomial> {
 	 */
 	@Override
 	public boolean isVariable(final Term var) {
-		throw new UnsupportedOperationException();
+		for(final Monomial mono : getMonomial2Coefficient().keySet()) {
+			if (mono.isVariable(var)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	@Override
