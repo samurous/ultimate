@@ -33,30 +33,47 @@ public class SMTFeatureExtractor {
 		mDumpPath = dump_path;
 		String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern( "uuuu-MM-dd" ));
 		mFilename = mDumpPath + timestamp + "-smtfeatures.csv"; 
+		File f = new File(mFilename);
+		if(!f.exists()){
+		  try {
+			f.createNewFile();
+			try(FileWriter fw = new FileWriter(mFilename, true);
+				    BufferedWriter bw = new BufferedWriter(fw);
+				    PrintWriter out = new PrintWriter(bw))
+				{
+				    String header = SMTFeature.getCsvHeader(";");
+				    out.println(header);
+				} catch (IOException | IllegalAccessException e) {
+					mLogger.error(e);
+				}
+			
+		} catch (IOException e) {
+			mLogger.error(e);
+		}
+		}else{
+		  mLogger.info("SMT feature dump-file already exists.");
+		}
 	}
 
 	public void extractFeature(Term[] terms, double time, String result) throws IllegalAccessException, IOException {
 		mLogger.warn("Extracting feature..");
 		TermClassifier tc = new TermClassifier();
 		for (Term term : terms) {
-			mLogger.warn(term.toString());
 			tc.checkTerm(term);
 		}
 		SMTFeature feature = new SMTFeature();
-		feature.mFormula = tc.getTerm();
-		feature.mContainsArrays = tc.hasArrays();
-		feature.mOccuringFunctions = tc.getOccuringFunctionNames();
-		feature.mOccuringQuantifiers = tc.getOccuringQuantifiers();
-		feature.mOccuringSorts = tc.getOccuringSortNames();
-		feature.mNumberOfFunctions = tc.getNumberOfFunctions();
-		feature.mNumberOfQuantifiers = tc.getNumberOfQuantifiers();
-		feature.mDAGSize = tc.getDAGSize();
-		feature.mTreeSize = tc.getTreeSize();
-		feature.mResult = result;
-		feature.mSolverTime = time;
-		mLogger.warn(tc.getStats());
-		mLogger.warn(result);
-		mLogger.warn(time);
+		feature.assertionStack = tc.getTerm();
+		feature.containsArrays = tc.hasArrays();
+		feature.occuringFunctions = tc.getOccuringFunctionNames();
+		feature.occuringQuantifiers = tc.getOccuringQuantifiers();
+		feature.occuringSorts = tc.getOccuringSortNames();
+		feature.numberOfFunctions = tc.getNumberOfFunctions();
+		feature.numberOfQuantifiers = tc.getNumberOfQuantifiers();
+		feature.numberOfVariables = tc.getNumberOfVariables();
+		feature.dagsize = tc.getDAGSize();
+		feature.treesize = tc.getTreeSize();
+		feature.solverresult = result;
+		feature.solvertime = time;
 		mFeatures.add(feature);
 		dumpFeature(feature);
 		
@@ -68,7 +85,7 @@ public class SMTFeatureExtractor {
 			    BufferedWriter bw = new BufferedWriter(fw);
 			    PrintWriter out = new PrintWriter(bw))
 			{
-			    mLogger.warn(feature.getCsvHeader(";"));
+			    mLogger.warn(SMTFeature.getCsvHeader(";"));
 			    out.println(feature.toCsv(";"));
 			} catch (IOException e) {
 				throw new IOException(e);

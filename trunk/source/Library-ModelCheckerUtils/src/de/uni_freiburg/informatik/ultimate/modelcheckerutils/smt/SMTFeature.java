@@ -40,36 +40,34 @@ import java.util.Set;
  *
  */
 public class SMTFeature {
-	public int mNumberOfFunctions = 0;
-	public int mNumberOfQuantifiers = 0;
-	public int mDAGSize = 0;
-	public long mTreeSize = 0;
-
-
-	public Set<String> mOccuringSorts = Collections.emptySet();
-	public Set<String> mOccuringFunctions = Collections.emptySet();
-	public Set<Integer> mOccuringQuantifiers = Collections.emptySet();
-
-	public boolean mContainsArrays = false;
-
-	public ArrayList<String> mFormula = new ArrayList<String>();
-	public String mResult = "";
-	public double mSolverTime = 0.0;
+	public int numberOfFunctions = 0;
+	public int numberOfQuantifiers = 0;
+	public int numberOfVariables = 0;
+	public int dagsize = 0;
+	public long treesize = 0;
+	public Set<String> occuringSorts = Collections.emptySet();
+	public Set<String> occuringFunctions = Collections.emptySet();
+	public Set<Integer> occuringQuantifiers = Collections.emptySet();
+	public boolean containsArrays = false;
+	public ArrayList<String> assertionStack = new ArrayList<String>();
+	public String solverresult = "";
+	public double solvertime = 0.0;
 
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(mFormula).append(",");
-		sb.append(mNumberOfFunctions).append(",");
-		sb.append(mNumberOfQuantifiers).append(",");
-		sb.append(mDAGSize).append(",");
-		sb.append(mTreeSize).append(",");
-		sb.append(mOccuringFunctions).append(",");
-		sb.append(mOccuringSorts).append(",");
-		sb.append(mOccuringQuantifiers).append(",");
-		sb.append(mContainsArrays).append(",");
-		sb.append(mResult).append(",");
-		sb.append(mSolverTime);
+		sb.append(assertionStack).append(",");
+		sb.append(numberOfFunctions).append(",");
+		sb.append(numberOfQuantifiers).append(",");
+		sb.append(numberOfVariables).append(",");
+		sb.append(dagsize).append(",");
+		sb.append(treesize).append(",");
+		sb.append(occuringFunctions).append(",");
+		sb.append(occuringSorts).append(",");
+		sb.append(occuringQuantifiers).append(",");
+		sb.append(containsArrays).append(",");
+		sb.append(solverresult).append(",");
+		sb.append(solvertime);
 		return sb.toString();
 	}
 	
@@ -83,9 +81,9 @@ public class SMTFeature {
 		sb.append(String.join(delimiter,values));
 		return sb.toString();
 	}
-	public String getCsvHeader(String delimiter) throws IllegalAccessException {
+	public static String getCsvHeader(String delimiter) throws IllegalAccessException {
 		StringBuilder sb = new StringBuilder();
-		Field[] fields = getClass().getDeclaredFields();
+		Field[] fields = SMTFeature.class.getFields();
 		ArrayList<String> names = new ArrayList<String>();
 		for (Field field : fields) {
 			names.add(field.getName());
