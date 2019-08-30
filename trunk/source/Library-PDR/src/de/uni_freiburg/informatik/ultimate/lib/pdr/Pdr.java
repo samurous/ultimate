@@ -193,7 +193,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 
 		mScript = createSolver(mServices, mCsToolkit);
 		mPredTrans = new PredicateTransformer<>(mScript, new TermDomainOperationProvider(mServices, mScript));
-		mAxioms = mPredicateUnifier.getOrConstructPredicate(mCsToolkit.getSmtSymbols().getAxioms());
+		mAxioms = mPredicateUnifier.getOrConstructPredicate(mCsToolkit.getSmtFunctionsAndAxioms().getAxioms());
 
 		mTruePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("true"));
 		mFalsePred = mPredicateUnifier.getOrConstructPredicate(mScript.getScript().term("false"));
@@ -233,7 +233,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				SolverBuilder.constructSolverSettings(SolverMode.Internal_SMTInterpol, false, null);
 		final Script script = SolverBuilder.buildAndInitializeSolver(services, SolverMode.Internal_SMTInterpol,
 				solverSettings, false, false, Logics.ALL.toString(), "PdrSolver");
-		csToolkit.getSmtSymbols().transferSymbols(script);
+		csToolkit.getSmtFunctionsAndAxioms().transferSymbols(script);
 		return new ManagedScript(services, script);
 	}
 
