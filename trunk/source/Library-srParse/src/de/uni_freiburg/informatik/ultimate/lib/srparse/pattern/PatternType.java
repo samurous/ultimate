@@ -4,13 +4,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.DCPhase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
+import de.uni_freiburg.informatik.ultimate.lib.pea.Trace2PeaCompilerStateless;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 public abstract class PatternType {
@@ -65,13 +66,19 @@ public abstract class PatternType {
 		return mScope;
 	}
 
-	protected abstract PhaseEventAutomata transform(PatternToPEA peaTrans, final Map<String, Integer> id2bounds);
+	protected abstract CounterTrace transform(CDD[] cdds, int[] durations);
 
 	public abstract PatternType rename(String newName);
 
-	public PhaseEventAutomata transformToPea(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
+	public PhaseEventAutomata transformToPea(final ILogger logger, final Map<String, Integer> id2bounds) {
 		if (mPea == null) {
-			mPea = transform(peaTrans, id2bounds);
+			final CDD[] cdds = getCddsAsArray();
+			final int[] durations = getDurationsAsIntArray(id2bounds);
+			final CounterTrace ct = transform(cdds, durations);
+			final String name = getId() + "_" + createPeaSuffix();
+			final Trace2PeaCompilerStateless compiler =
+					new Trace2PeaCompilerStateless(logger, name, ct, id2bounds.keySet());
+			mPea = compiler.getResult();
 		}
 		return mPea;
 	}
@@ -93,10 +100,6 @@ public abstract class PatternType {
 			}
 			return actualDuration;
 		}
-	}
-
-	protected PhaseEventAutomata compile(final PatternToPEA peaTrans, final CounterTrace ct) {
-		return peaTrans.compile(getId() + "_" + createPeaSuffix(), ct);
 	}
 
 	private String createPeaSuffix() {
@@ -169,9 +172,9 @@ public abstract class PatternType {
 		// note that mId and mPea are deliberately not part of the hash code or the equality comparison
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mCdds == null) ? 0 : mCdds.hashCode());
-		result = prime * result + ((mDurations == null) ? 0 : mDurations.hashCode());
-		result = prime * result + ((mScope == null) ? 0 : mScope.hashCode());
+		result = prime * result + (mCdds == null ? 0 : mCdds.hashCode());
+		result = prime * result + (mDurations == null ? 0 : mDurations.hashCode());
+		result = prime * result + (mScope == null ? 0 : mScope.hashCode());
 		return result;
 	}
 

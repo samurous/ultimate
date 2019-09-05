@@ -6,9 +6,9 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 public class PowersetConstruction {
 
@@ -75,7 +75,7 @@ public class PowersetConstruction {
 				int fromIndex = getNodeIndex(v, w.getLabel(), auto2Nodes.size());
 				int toIndex = getNodeIndex(vl, wl.getLabel(), auto2Nodes.size());
 				conjTerm = SmtUtils.and(mScript, X, Y);
-				if (!SmtUtils.isFalse(conjTerm))
+				if (!SmtUtils.isFalseLiteral(conjTerm))
 					mProductAutStates.get(fromIndex).connectOutgoing(mProductAutStates.get(toIndex), conjTerm);
 					mProductAutStates.get(0).incEdges();
 			}

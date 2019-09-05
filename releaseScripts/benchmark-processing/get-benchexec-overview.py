@@ -38,6 +38,7 @@ known_exceptions = {
     "No Boogie because C type is incomplete": True,
     "AssertionError: Invalid VarList": True,
     "AssertionError: Invalid Procedure": True,
+    "AssertionError: No corresponding IProgramVar": True,
     "Wrong parameter type at index": True,
     "Undeclared identifier ": True,
     "Modifies not transitive": True,

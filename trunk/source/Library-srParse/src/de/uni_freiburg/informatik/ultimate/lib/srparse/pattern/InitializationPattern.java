@@ -27,14 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
-import java.util.Map;
-
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 
 /**
+ * TODO: explain pattern
  *
  * @author Vincent Langenfeld (langenfv@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -94,7 +93,7 @@ public class InitializationPattern extends PatternType {
 	}
 
 	@Override
-	protected PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
+	protected CounterTrace transform(CDD[] cdds, int[] durations) {
 		throw new UnsupportedOperationException();
 	}
 

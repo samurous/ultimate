@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -69,7 +70,7 @@ public class SmtTestUtils {
 	}
 
 	public static boolean isSyntacticallyEquivalentToTrue(final Term term) {
-		return SmtUtils.isTrue(term);
+		return SmtUtils.isTrueLiteral(term);
 	}
 
 }

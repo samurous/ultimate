@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.math.BigInteger;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -38,12 +37,13 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
@@ -52,12 +52,14 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
  *
  */
 public class MuensterbergBenchmark {
+
 	/**
 	 * Warning: each test will overwrite the SMT script of the preceding test.
 	 */
 	private static final boolean WRITE_SMT_SCRIPTS_TO_FILE = false;
 	private static final boolean WRITE_BENCHMARK_RESULTS_TO_WORKING_DIRECTORY = false;
 	private static final long TEST_TIMEOUT_MILLISECONDS = 10_000;
+	private static final LogLevel LOG_LEVEL = LogLevel.INFO;
 	private static final String SOLVER_COMMAND = "z3 SMTLIB2_COMPLIANT=true -t:1000 -memory:2024 -smt2 -in";
 
 	private IUltimateServiceProvider mServices;
@@ -84,11 +86,11 @@ public class MuensterbergBenchmark {
 
 	@Before
 	public void setUp() throws FileNotFoundException {
-		mServices = UltimateMocks.createUltimateServiceProviderMock();
+		mServices = UltimateMocks.createUltimateServiceProviderMock(LOG_LEVEL);
 		mServices.getProgressMonitorService().setDeadline(System.currentTimeMillis() + TEST_TIMEOUT_MILLISECONDS);
 		mLogger = mServices.getLoggingService().getLogger("lol");
 
-		final Script solverInstance = UltimateMocks.createSolver(SOLVER_COMMAND, LogLevel.INFO);
+		final Script solverInstance = UltimateMocks.createSolver(SOLVER_COMMAND, LOG_LEVEL);
 		if (WRITE_SMT_SCRIPTS_TO_FILE) {
 			mScript = new LoggingScript(solverInstance, "QuantifierEliminationTest.smt2", true);
 		} else {
@@ -112,8 +114,8 @@ public class MuensterbergBenchmark {
 	@Test
 	public void rajdeepIteration5wp() {
 
-		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(8) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv8 = SmtSortUtils.getBitvectorSort(mScript, 8);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 		final Sort array = SmtSortUtils.getArraySort(mScript, bv32, bv8);
 
 		mScript.declareFun("ULTIMATE.start_design_~nack.base", new Sort[0], bv32);
@@ -220,8 +222,8 @@ public class MuensterbergBenchmark {
 	 */
 	@Test
 	public void forester_heap_dll_optional() {
-		final Sort bv1 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(1) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv1 = SmtSortUtils.getBitvectorSort(mScript, 1);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 		final Sort array = SmtSortUtils.getArraySort(mScript, bv32, bv1);
 		mScript.declareFun("main_~head~0.offset", new Sort[0], bv32);
 		mScript.declareFun("main_~head~0.base", new Sort[0], bv32);
@@ -236,8 +238,8 @@ public class MuensterbergBenchmark {
 
 	@Test
 	public void forester_heap_dll_01() {
-		final Sort bv1 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(1) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv1 = SmtSortUtils.getBitvectorSort(mScript, 1);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 		final Sort array = SmtSortUtils.getArraySort(mScript, bv32, bv1);
 		mScript.declareFun("main_#t~malloc9.base", new Sort[0], bv32);
 		mScript.declareFun("main_~end~0.offset", new Sort[0], bv32);
@@ -253,8 +255,8 @@ public class MuensterbergBenchmark {
 
 	@Test
 	public void forester_heap_dll_simple_white_blue() {
-		final Sort bv1 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(1) });
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv1 = SmtSortUtils.getBitvectorSort(mScript, 1);
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 		final Sort array = SmtSortUtils.getArraySort(mScript, bv32, bv1);
 		mScript.declareFun("main_~x~0.offset", new Sort[0], bv32);
 		mScript.declareFun("main_~head~0.offset", new Sort[0], bv32);
@@ -270,7 +272,7 @@ public class MuensterbergBenchmark {
 
 	@Test
 	public void dllqueue01() {
-		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, new BigInteger[] { BigInteger.valueOf(32) });
+		final Sort bv32 = SmtSortUtils.getBitvectorSort(mScript, 32);
 		final Sort bv32Tobv32 = SmtSortUtils.getArraySort(mScript, bv32, bv32);
 		final Sort bv32Tobv32Tobv32 = SmtSortUtils.getArraySort(mScript, bv32, bv32Tobv32);
 

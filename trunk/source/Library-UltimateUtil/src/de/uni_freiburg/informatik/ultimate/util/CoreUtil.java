@@ -137,49 +137,21 @@ public class CoreUtil {
 	/**
 	 * Traverses the OS' PATH and searches for a file that fulfills the following conditions.
 	 * <ul>
-	 * <li>It is named <name>,
+	 * <li>The filename starts with {@code <name>},
 	 * <li>the current process is allowed to execute it,
-	 * <li>it looks like some known executable binary.
+	 * <li>it looks like some known executable binary (i.e., has the right magic numbers in the beginning).
 	 * </ul>
 	 */
 	public static File findExecutableBinaryOnPath(final String name) {
 		final Predicate<File> funLooksLikeExectuable;
 		if (CoreUtil.OS_IS_WINDOWS) {
-			// Check for Windows executable:
-			// Windows uses the Portable Executable format, which should always start with the magic number 4d5a
-			// (ASCII characters MZ)
-			funLooksLikeExectuable = f -> {
-				final byte[] firstBytes = new byte[4];
-				try {
-					final FileInputStream input = new FileInputStream(f);
-					input.read(firstBytes);
-					input.close();
-
-					if (firstBytes[0] == 0x4d && firstBytes[1] == 0x5a) {
-						return true;
-					}
-					return false;
-				} catch (final Exception e) {
-					return false;
-				}
-			};
+			// Windows uses the Portable Executable format starting with 0x4d5a (ASCII characters MZ)
+			final byte[] exeMagicNumber = {'M', 'Z'};
+			funLooksLikeExectuable = f -> hasMagicNumber(f, exeMagicNumber);
 		} else {
-			// just assume linux: ELF format executable used by Linux start with 7f454c46
-			funLooksLikeExectuable = f -> {
-				final byte[] firstBytes = new byte[8];
-				try {
-					final FileInputStream input = new FileInputStream(f);
-					input.read(firstBytes);
-					input.close();
-					if (firstBytes[0] == 0x7f && firstBytes[1] == 0x45 && firstBytes[1] == 0x4c
-							&& firstBytes[1] == 0x46) {
-						return true;
-					}
-					return false;
-				} catch (final Exception e) {
-					return false;
-				}
-			};
+			// Just assume Linux: ELF format executables start with 0x7f454c46 (ASCII characters <DEL>ELF)
+			final byte[] elfMagicNumber = {0x7f, 'E', 'L', 'F'};
+			funLooksLikeExectuable = f -> hasMagicNumber(f, elfMagicNumber);
 		}
 
 		for (final String dirname : System.getenv("PATH").split(File.pathSeparator)) {
@@ -194,6 +166,16 @@ public class CoreUtil {
 			}
 		}
 		return null;
+	}
+
+	private static boolean hasMagicNumber(final File file, final byte[] magicNumber) {
+		try (final FileInputStream input = new FileInputStream(file)) {
+			final byte[] firstBytes = new byte[magicNumber.length];
+			input.read(firstBytes);
+			return Arrays.equals(firstBytes, magicNumber);
+		} catch (final Exception e) {
+			return false;
+		}
 	}
 
 	public static File writeFile(final File file, final String content) throws IOException {

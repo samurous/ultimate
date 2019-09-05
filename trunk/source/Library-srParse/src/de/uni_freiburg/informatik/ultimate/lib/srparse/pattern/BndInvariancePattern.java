@@ -1,13 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace.BoundTypes;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfter;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeAfterUntil;
@@ -16,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeGlob;
 
 /**
- * {scope}, it is always the case that if "R" holds, then "S" holds for at least "c1" time units.
+ * {scope}, it is always the case that if "R" holds, then "S" holds for at least "c1" time units
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -29,10 +26,7 @@ public class BndInvariancePattern extends PatternType {
 	}
 
 	@Override
-	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
-
-		final CDD[] cdds = getCddsAsArray();
-		final int[] durations = getDurationsAsIntArray(id2bounds);
+	public CounterTrace transform(final CDD[] cdds, final int[] durations) {
 		assert cdds.length == 2 && durations.length == 1;
 
 		final SrParseScope scope = getScope();
@@ -66,7 +60,8 @@ public class BndInvariancePattern extends PatternType {
 		} else {
 			throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 		}
-		return compile(peaTrans, ct);
+
+		return ct;
 	}
 
 	@Override

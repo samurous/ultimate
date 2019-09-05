@@ -34,34 +34,33 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.IReqSymbolTable;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.PeaResultUtil;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.TypeErrorInfo;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.ErrorInfo;
+import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.ReqSymboltableBuilder.ErrorType;
 
 public class ReqToPEA {
 	private static final boolean ENABLE_DEBUG_LOGS = false;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final PeaResultUtil mResult;
-	private final Set<String> mConstIds;
+	private final PeaResultUtil mResultUtil;
 	private final Map<PatternType, PhaseEventAutomata> mPattern2Peas;
 	private final IReqSymbolTable mSymbolTable;
-	private final Map<String, TypeErrorInfo> mTypeErrors;
+	private final boolean mHasErrors;
 
 	public ReqToPEA(final IUltimateServiceProvider services, final ILogger logger,
-			final List<InitializationPattern> init, final List<PatternType> requirements,
-			final Map<String, Integer> id2bounds) {
+			final List<InitializationPattern> init, final List<PatternType> requirements) {
 		mLogger = logger;
 		mServices = services;
-		mResult = new PeaResultUtil(mLogger, mServices);
+		mResultUtil = new PeaResultUtil(mLogger, mServices);
 
 		final ReqSymboltableBuilder builder = new ReqSymboltableBuilder(mLogger);
 
@@ -70,8 +69,7 @@ public class ReqToPEA {
 				builder.addInitPattern((InitializationPattern) pattern);
 			}
 		}
-
-		mConstIds = builder.getConstIds();
+		final Map<String, Integer> id2bounds = builder.getId2Bounds();
 		mPattern2Peas = generatePeas(requirements, id2bounds);
 
 		for (final Entry<PatternType, PhaseEventAutomata> entry : mPattern2Peas.entrySet()) {
@@ -79,7 +77,17 @@ public class ReqToPEA {
 		}
 
 		mSymbolTable = builder.constructSymbolTable();
-		mTypeErrors = builder.getTypeErrors();
+		final Set<Entry<String, ErrorInfo>> errors = builder.getErrors();
+		for (final Entry<String, ErrorInfo> entry : errors) {
+			if (entry.getValue().getType() == ErrorType.SYNTAX_ERROR) {
+				final BoogieLocation loc = mSymbolTable.getLocations().get(entry.getValue().getSource());
+				mResultUtil.syntaxError(loc, entry.getValue().getMessage());
+			} else {
+				final String msg = entry.getValue().getType().toString() + " of " + entry.getKey();
+				mResultUtil.typeError(entry.getValue().getSource(), msg);
+			}
+		}
+		mHasErrors = !errors.isEmpty();
 	}
 
 	public Map<PatternType, PhaseEventAutomata> getPattern2Peas() {
@@ -90,14 +98,9 @@ public class ReqToPEA {
 		return mSymbolTable;
 	}
 
-	public Map<String, TypeErrorInfo> getTypeErrors() {
-		return mTypeErrors;
-	}
-
 	private Map<PatternType, PhaseEventAutomata> generatePeas(final List<PatternType> patterns,
 			final Map<String, Integer> id2bounds) {
 		final Map<PatternType, PhaseEventAutomata> req2automata = new LinkedHashMap<>();
-		final PatternToPEA peaTrans = new PatternToPEA(mLogger, mConstIds);
 		mLogger.info(String.format("Transforming %s requirements to PEAs", patterns.size()));
 
 		final Map<Class<?>, Integer> counter = new HashMap<>();
@@ -110,19 +113,19 @@ public class ReqToPEA {
 					mLogger.info("Transforming " + pat.getId());
 				}
 				counter.compute(pat.getClass(), (a, b) -> b == null ? 1 : b + 1);
-				pea = pat.transformToPea(peaTrans, id2bounds);
+				pea = pat.transformToPea(mLogger, id2bounds);
 			} catch (final Exception ex) {
 				final String reason = ex.getMessage() == null ? ex.getClass().toString() : ex.getMessage();
-				mResult.transformationError(pat, reason);
+				mResultUtil.transformationError(pat, reason);
 				continue;
 			}
 			if (pea.getInit().length == 0) {
-				mResult.transformationError(pat, "No initial phase");
+				mResultUtil.transformationError(pat, "No initial phase");
 				continue;
 			}
 			final PhaseEventAutomata old = req2automata.put(pat, pea);
 			if (old != null) {
-				mResult.transformationError(pat, "Duplicate automaton: " + old.getName() + " and " + pea.getName());
+				mResultUtil.transformationError(pat, "Duplicate automaton: " + old.getName() + " and " + pea.getName());
 				continue;
 			}
 		}
@@ -141,14 +144,12 @@ public class ReqToPEA {
 
 		PhaseEventAutomata pea = null;
 
-		final PatternToPEA peaTrans = new PatternToPEA(mLogger, mConstIds);
-
 		for (final PatternType pat : patterns) {
 			if (pea == null) {
-				pea = pat.transformToPea(peaTrans, id2bounds);
+				pea = pat.transformToPea(mLogger, id2bounds);
 
 			} else {
-				final PhaseEventAutomata pea2 = pat.transformToPea(peaTrans, id2bounds);
+				final PhaseEventAutomata pea2 = pat.transformToPea(mLogger, id2bounds);
 				if (pea2 == null) {
 					continue;
 				}
@@ -158,6 +159,10 @@ public class ReqToPEA {
 		}
 		final J2UPPAALConverter uppaalConverter = new J2UPPAALConverter();
 		uppaalConverter.writePEA2UppaalFile(xmlFilePath, pea);
+	}
+
+	public boolean hasErrors() {
+		return mHasErrors;
 	}
 
 }

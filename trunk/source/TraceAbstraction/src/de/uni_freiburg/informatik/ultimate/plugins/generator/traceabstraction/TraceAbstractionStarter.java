@@ -62,18 +62,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgAngelicProgramExecution;
@@ -153,7 +153,7 @@ public class TraceAbstractionStarter {
 
 		final CfgSmtToolkit csToolkit = icfg.getCfgSmtToolkit();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(),
-				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+				csToolkit.getSymbolTable());
 		TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(icfg);
 
 		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
@@ -325,8 +325,8 @@ public class TraceAbstractionStarter {
 			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation) {
 		final BasicCegarLoop<? extends IIcfgTransition<?>> basicCegarLoop =
-				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, taBenchmark, errorLocs,
-						rawFloydHoareAutomataFromFile, computeHoareAnnotation);
+				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, errorLocs, rawFloydHoareAutomataFromFile,
+						computeHoareAnnotation);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 
 		final Result result = basicCegarLoop.iterate();
@@ -365,8 +365,7 @@ public class TraceAbstractionStarter {
 
 	private BasicCegarLoop<?> constructCegarLoop(final DebugIdentifier name, final IIcfg<IcfgLocation> root,
 			final TAPreferences taPrefs, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
-			final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
+			final Collection<IcfgLocation> errorLocs, final List<INestedWordAutomaton<String, String>> rawFloydHoareAutomataFromFile,
 			final boolean computeHoareAnnotation) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
@@ -374,8 +373,8 @@ public class TraceAbstractionStarter {
 		BasicCegarLoop<IIcfgTransition<?>> result;
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
-				result = new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, taBenchmark, taPrefs,
-						errorLocs, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices);
+				result = new CegarLoopSWBnonRecursive<>(name, root, csToolkit, predicateFactory, taPrefs, errorLocs,
+						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices);
 			} else {
 				switch (taPrefs.getFloydHoareAutomataReuse()) {
 				case EAGER:

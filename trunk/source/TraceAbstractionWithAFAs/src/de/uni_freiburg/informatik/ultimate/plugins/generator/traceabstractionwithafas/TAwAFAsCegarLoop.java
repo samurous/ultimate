@@ -51,27 +51,27 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.debugidentifiers.DebugIdentifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.ReachingDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
@@ -102,9 +102,8 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
 			final IUltimateServiceProvider services) {
 		super(name, rootNode, csToolkit, predicateFactory, traceAbstractionBenchmarks, taPrefs, errorLocs, services);
-		mPredicateUnifier = new PredicateUnifier(mLogger, services, csToolkit.getManagedScript(),
-				predicateFactory, rootNode.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique,
-				mXnfConversionTechnique,
+		mPredicateUnifier = new PredicateUnifier(mLogger, services, csToolkit.getManagedScript(), predicateFactory,
+				rootNode.getCfgSmtToolkit().getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
 				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("true")),
 				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false")));
 	}
@@ -199,8 +198,9 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 		}
 		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 
-		final RAFA_Determination<LETTER> determination = new RAFA_Determination<LETTER>(
-				new AutomataLibraryServices(mServices), alternatingAutomatonUnion, mCsToolkit, mPredicateUnifier, mPredicateFactoryInterpolantAutomata);
+		final RAFA_Determination<LETTER> determination =
+				new RAFA_Determination<>(new AutomataLibraryServices(mServices), alternatingAutomatonUnion,
+						mCsToolkit, mPredicateUnifier, mPredicateFactoryInterpolantAutomata);
 		mInterpolAutomaton = determination.getResult();
 		try {
 			assert new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton, (NestedWord<LETTER>) trace)
@@ -602,7 +602,7 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 			}
 		}
 		if (bex.getNextConjunctExpression() != null) {
-			pred = mPredicateFactory.or(false, pred, bexToPredicate(bex.getNextConjunctExpression(), states));
+			pred = mPredicateFactory.or(pred, bexToPredicate(bex.getNextConjunctExpression(), states));
 		}
 		return pred;
 	}

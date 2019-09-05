@@ -4,18 +4,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.SolvedBinaryRelation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.AbstractGeneralizedaAffineRelation.TransformInequality;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AbstractGeneralizedaAffineRelation.TransformInequality;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineRelation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.AffineTerm;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.BinaryRelation.RelationSymbol;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearterms.NotAffineException;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class EquivalenceFinder {
@@ -33,17 +32,12 @@ public class EquivalenceFinder {
 		final UnionFind<Term> result = new UnionFind<>();
 		for (final AffineRelation relation : mRelations) {
 			for (final Term var : neededEquivalenceClasses) {
-				if (!relation.isVariable(var)) {
+				final SolvedBinaryRelation sbr = relation.solveForSubject(mScript, var);
+				if (sbr == null || !sbr.getAssumptionsMap().isEmpty()) {
 					continue;
 				}
-				final ApplicationTerm lhsTerm;
-				try {
-					lhsTerm = relation.onLeftHandSideOnly(mScript, var);
-				} catch (final NotAffineException e) {
-					continue;
-				}
-				assert "=".equals(lhsTerm.getFunction().getApplicationString());
-				final Term equivalent = lhsTerm.getParameters()[1];
+				assert "=".equals(relation.getRelationSymbol().toString());
+				final Term equivalent = sbr.getRightHandSide();
 				result.findAndConstructEquivalenceClassIfNeeded(var);
 				result.findAndConstructEquivalenceClassIfNeeded(equivalent);
 				result.union(var, equivalent);

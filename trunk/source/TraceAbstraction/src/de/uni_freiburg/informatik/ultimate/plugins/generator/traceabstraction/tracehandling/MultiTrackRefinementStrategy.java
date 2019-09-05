@@ -35,22 +35,22 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SMTFeatureExtractorScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.TracePredicates;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SMTFeatureExtractorScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.TracePredicates;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.RefinementStrategyExceptionBlacklist;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.taskidentifier.TaskIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode;
@@ -155,17 +155,26 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	private final RefinementEngineStatisticsGenerator mRefinementEngineStatisticsGenerator;
 
 	/**
-	 * @param prefs                              Preferences. pending contexts
-	 * @param services                           Ultimate services
-	 * @param predicateUnifier                   predicate unifier
-	 * @param counterexample                     counterexample trace
-	 * @param logger                             logger
+	 * @param prefs
+	 *            Preferences. pending contexts
+	 * @param services
+	 *            Ultimate services
+	 * @param predicateUnifier
+	 *            predicate unifier
+	 * @param counterexample
+	 *            counterexample trace
+	 * @param logger
+	 *            logger
 	 * @param cfgSmtToolkit
-	 * @param abstraction                        abstraction
-	 * @param taPrefsForInterpolantConsolidation temporary argument, should be removed
-	 * @param assertionOrderModulation           assertion order modulation
+	 * @param abstraction
+	 *            abstraction
+	 * @param taPrefsForInterpolantConsolidation
+	 *            temporary argument, should be removed
+	 * @param assertionOrderModulation
+	 *            assertion order modulation
 	 * @param precondition
-	 * @param cegarLoopBenchmarks                benchmark
+	 * @param cegarLoopBenchmarks
+	 *            benchmark
 	 */
 	@SuppressWarnings("squid:S1699")
 	protected MultiTrackRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
@@ -242,7 +251,8 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 	}
 
 	/**
-	 * Do not search for more interpolants if you already found a perfect interpolant sequence OR this number of imperfect interpolant sequences.
+	 * Do not search for more interpolants if you already found a perfect interpolant sequence OR this number of
+	 * imperfect interpolant sequences.
 	 *
 	 * @return the number of imperfect sequences after which this strategy is satisfied.
 	 */
@@ -293,8 +303,8 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		final boolean useTimeout = mHasShownInfeasibilityBefore;
 		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mNextTechnique, useTimeout);
 
-		final AssertCodeBlockOrder assertionOrder = mAssertionOrderModulation.get(mCounterexample,
-				interpolationTechnique);
+		final AssertCodeBlockOrder assertionOrder =
+				mAssertionOrderModulation.get(mCounterexample, interpolationTechnique);
 
 		mNextTechnique = null;
 
@@ -352,8 +362,8 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		case SMTINTERPOL_TREE_INTERPOLANTS:
 		case SMTINTERPOL_FP:
 		case SMTINTERPOL_TREE_INTERPOLANTS_NO_ARRAY:
-			final long timeout = useTimeout ? SolverBuilder.TIMEOUT_SMTINTERPOL
-					: SolverBuilder.TIMEOUT_NONE_SMTINTERPOL;
+			final long timeout =
+					useTimeout ? SolverBuilder.TIMEOUT_SMTINTERPOL : SolverBuilder.TIMEOUT_NONE_SMTINTERPOL;
 			solverSettings = new SolverSettings(false, false, null, timeout, null, dumpSmtScriptToFile,
 					pathOfDumpedScript, baseNameOfDumpedScript);
 			solverMode = mode == Track.SMTINTERPOL_TREE_INTERPOLANTS_NO_ARRAY
@@ -364,8 +374,10 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		case Z3_NESTED_INTERPOLANTS:
 			throw new AssertionError("The mode " + Track.Z3_NESTED_INTERPOLANTS + "is currently unsupported.");
 			/*
-			 * command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT; // TODO: Add external interpolator String externalInterpolator = null; solverSettings = new Settings(false, true, command, 0,
-			 * externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript); solverMode = SolverMode.External_Z3InterpolationMode; logicForExternalSolver = LOGIC_Z3; break;
+			 * command = useTimeout ? COMMAND_Z3_TIMEOUT : COMMAND_Z3_NO_TIMEOUT; // TODO: Add external interpolator
+			 * String externalInterpolator = null; solverSettings = new Settings(false, true, command, 0,
+			 * externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript); solverMode =
+			 * SolverMode.External_Z3InterpolationMode; logicForExternalSolver = LOGIC_Z3; break;
 			 */
 		case Z3_FPBP:
 		case Z3_FP:
@@ -404,8 +416,9 @@ public abstract class MultiTrackRefinementStrategy<LETTER extends IIcfgTransitio
 		}
 		Script solver = SolverBuilder.buildAndInitializeSolver(services, solverMode, solverSettings, false, false,
 				logicForExternalSolver, "TraceCheck_Iteration" + mTaskIdentifier);
-		if(mTaPrefsForInterpolantConsolidation.useSMTFeatureExtraction()) {
-			solver = new SMTFeatureExtractorScript(solver, mLogger, mServices, mTaPrefsForInterpolantConsolidation.getSMTFeatureExtractionDumpPath());
+		if (mTaPrefsForInterpolantConsolidation.useSMTFeatureExtraction()) {
+			solver = new SMTFeatureExtractorScript(solver, mLogger, mServices,
+					mTaPrefsForInterpolantConsolidation.getSMTFeatureExtractionDumpPath());
 		}
 		final ManagedScript result = new ManagedScript(services, solver);
 		prefs.getIcfgContainer().getCfgSmtToolkit().getSmtSymbols().transferSymbols(solver);

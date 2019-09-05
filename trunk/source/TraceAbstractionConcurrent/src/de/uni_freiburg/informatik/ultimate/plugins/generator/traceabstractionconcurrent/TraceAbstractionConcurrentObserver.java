@@ -50,14 +50,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgPetrifier.IcfgConstructionMode;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -98,11 +98,9 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		mServices.getBacktranslationService().addTranslator(icfgPetrifier.getBacktranslator());
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
-		mLogger.warn(taPrefs.dumpPath());
-
 		final CfgSmtToolkit csToolkit = petrifiedIcfg.getCfgSmtToolkit();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(),
-				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+				csToolkit.getSymbolTable());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(petrifiedIcfg);
 		final Set<IcfgLocation> threadErrorLocations;
 		if (csToolkit.getConcurrencyInformation().getThreadInstanceMap().isEmpty()) {

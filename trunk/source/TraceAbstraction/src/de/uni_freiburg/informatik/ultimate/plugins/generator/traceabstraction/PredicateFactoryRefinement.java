@@ -33,12 +33,12 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateWithHistory;
@@ -103,7 +103,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		if (someElement instanceof ISLPredicate) {
 			final IcfgLocation pp = ((ISLPredicate) someElement).getProgramPoint();
 			if (mHoareAnnotationProgramPoints.contains(pp)) {
-				Term disjuntion = mPredicateFactory.or(false, states).getFormula();
+				Term disjuntion = mPredicateFactory.or(states).getFormula();
 				disjuntion = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(disjuntion);
 				return mPredicateFactory.newSPredicate(pp, disjuntion);
 			}
@@ -114,7 +114,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 				assert false : "minimize empty set???";
 				return mPredicateFactory.newMLDontCarePredicate(pps);
 			}
-			final Term disjunction = mPredicateFactory.or(false, states).getFormula();
+			final Term disjunction = mPredicateFactory.or(states).getFormula();
 			return mPredicateFactory.newMLPredicate(pps, disjunction);
 		} else {
 			throw new AssertionError("unknown predicate");
@@ -156,8 +156,8 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 
 	@Override
 	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<?, IPredicate> marking) {
-		final IcfgLocation[] programPoints = marking.stream().map(x -> ((SPredicate) x).getProgramPoint())
-				.toArray(IcfgLocation[]::new);
+		final IcfgLocation[] programPoints =
+				marking.stream().map(x -> ((SPredicate) x).getProgramPoint()).toArray(IcfgLocation[]::new);
 		return mPredicateFactory.newMLDontCarePredicate(programPoints);
 	}
 

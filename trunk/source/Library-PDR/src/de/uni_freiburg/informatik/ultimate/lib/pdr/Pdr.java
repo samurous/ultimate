@@ -43,6 +43,52 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder.SolverSettings;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheck;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.lib.pdr.PdrBenchmark.PdrStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -50,51 +96,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverSettings;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.interpolant.InterpolantComputationStatus.ItpErrorStatus;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheck;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.ITraceCheckPreferences;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.ExceptionHandlingCategory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.tracecheck.TraceCheckReasonUnknown.Reason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramConstructionResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -225,7 +226,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 		if (USE_ICFGBUILDER_SOLVER) {
 			return csToolkit.getManagedScript();
 		}
-		// TODO: I guess we have to use two solvers to implement everything correctly: one to represent the predicates
+		// TODO: I guess we have to use two solvers to implement everything correctly:
+		// one to represent the predicates
 		// we extract and one to perform the actual checks
 		final SolverSettings solverSettings =
 				SolverBuilder.constructSolverSettings(SolverMode.Internal_SMTInterpol, false, null);
@@ -345,9 +347,24 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					mLogger.debug("PP:");
 					mLogger.debug("  " + new IcfgLocationIterator<>(mPpIcfg).asStream()
 							.map(a -> a.getDebugIdentifier().toString()).collect(Collectors.joining(",")));
+					mLogger.debug("Error is not reachable.");
 				}
-				mLogger.debug("Error is not reachable.");
 				mInterpolants = computeInterpolants();
+
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Interpolants are");
+					int i = 0;
+					mLogger.debug("{true}");
+					for (final LETTER letter : mTrace) {
+						mLogger.debug(letter);
+
+						if (i != mTrace.size() - 1) {
+							mLogger.debug("%s {%s}", letter.getTarget(), mInterpolants[i]);
+						}
+						++i;
+					}
+					mLogger.debug("{false}");
+				}
 				return LBool.UNSAT;
 			}
 		}
@@ -397,16 +414,23 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				 * Dealing with internal transitions:
 				 */
 				if (predecessorTransition instanceof IIcfgInternalTransition) {
-					result = checkSatInternal(query.getFirst(), (IInternalAction) query.getSecond(), query.getThird());
+					final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
+							.getModifiedBoogieVars(predecessorTransition.getPrecedingProcedure());
+					final UnmodifiableTransFormula predTF = predecessorTransition.getTransformula();
+					final LBool res = PredicateUtils.isInductiveHelper(mScript.getScript(), predecessorFrame,
+							not(toBeBlocked), predTF, modifiableGlobals, modifiableGlobals);
+
+					// result = checkSatInternal(predecessorFrame, (IInternalAction)
+					// predecessorTransition, toBeBlocked);
 					/*
 					 * Query is satisfiable: generate new proofobligation
 					 */
-					if (result == Validity.INVALID) {
+					if (res == LBool.SAT) {
 						if (level - 1 == 0) {
 							return false;
 						}
 
-						Term pre = mPredTrans.pre(query.getThird(), query.getSecond().getTransformula());
+						Term pre = mPredTrans.pre(toBeBlocked, predTF);
 						if (pre instanceof QuantifiedFormula) {
 							pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
 									SimplificationTechnique.SIMPLIFY_DDA,
@@ -423,25 +447,25 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						/*
 						 * Query is not satisfiable: strengthen the frames of location.
 						 */
-					} else if (result == Validity.VALID) {
+					} else if (res == LBool.UNSAT) {
 						if (USE_INTERPOLATION) {
 							final IPredicate interpolant =
-									getInterpolant((IcfgEdge) query.getSecond(), query.getFirst(), query.getThird());
+									getInterpolant(predecessorTransition, predecessorFrame, toBeBlocked);
 							if (interpolant != null) {
 								// final List<IPredicate> predsForDumbPeople = new ArrayList<>();
 								// predsForDumbPeople.add(not(interpolant));
-								// predsForDumbPeople.add(mPredicateUnifier.getOrConstructPredicate(query.getThird()));
+								// predsForDumbPeople.add(mPredicateUnifier.getOrConstructPredicate(toBeBlocked));
 								updateFrames(interpolant, location, level);
 							} else {
-								updateFrames(query.getThird(), location, level);
+								updateFrames(toBeBlocked, location, level);
 							}
 						} else {
-							updateFrames(query.getThird(), location, level);
+							updateFrames(toBeBlocked, location, level);
 						}
 						proofObligation.addBlockedQuery(query);
 					} else {
-						mLogger.error(String.format("Internal query %s && %s && %s was unknown!", query.getFirst(),
-								query.getSecond(), query.getThird()));
+						mLogger.error(String.format("Internal query %s && %s && %s was unknown!", predecessorFrame,
+								predecessorTransition, toBeBlocked));
 						throw new UnsupportedOperationException("Solver returned unknown");
 					}
 
@@ -452,9 +476,9 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					if (mDealWithProcedures.equals(DealWithProcedures.THROW_EXCEPTION)) {
 						throw new UnsupportedOperationException("Cannot deal with procedures");
 					}
-					
+
 					mLogger.debug("Found Call");
-					
+
 					result = checkSatCall(predecessorFrame, (ICallAction) predecessorTransition, toBeBlocked);
 					/*
 					 * Query is satisfiable: generate new proofobligation
@@ -465,18 +489,18 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						}
 						final TransFormula globalVarsAssignments = mCsToolkit.getOldVarsAssignmentCache()
 								.getGlobalVarsAssignment(predecessorTransition.getSucceedingProcedure());
-						
+
 						final TransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
 								.getOldVarsAssignment(predecessorTransition.getSucceedingProcedure());
-						
+
 						final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
 								.getModifiedBoogieVars(predecessorTransition.getSucceedingProcedure());
-						
+
 						final Term pre = mPredTrans.preCall(toBeBlocked, predecessorTransition.getTransformula(),
 								globalVarsAssignments, oldVarAssignments, modifiableGlobals);
-						
+
 						final IPredicate preCondition = mPredicateUnifier.getOrConstructPredicate(pre);
-						
+
 						addProofObligation(proofObligations, proofObligation, level, predecessor, preCondition);
 						/*
 						 * Query is not satisfiable: strengthen the frames of location.
@@ -484,8 +508,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 					} else if (result == Validity.VALID) {
 						updateFrames(toBeBlocked, location, level);
 					} else {
-						mLogger.error(String.format("Call query %s && %s && %s was unknown!", query.getFirst(),
-								query.getSecond(), query.getThird()));
+						mLogger.error(String.format("Call query %s && %s && %s was unknown!", predecessorFrame,
+								predecessorTransition, toBeBlocked));
 						throw new UnsupportedOperationException("Solver returned unknown");
 					}
 
@@ -497,55 +521,64 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 						throw new UnsupportedOperationException("Cannot deal with procedures");
 					}
 					mLogger.debug("Found Return");
-					
+
 					final IIcfgReturnTransition<?, ?> returnTrans = (IIcfgReturnTransition<?, ?>) predecessorTransition;
-					
 					final IcfgLocation pp = returnTrans.getCallerProgramPoint();
-					
 					final List<Pair<ChangedFrame, IPredicate>> callerFrame = mFrames.get(pp);
-					
+					final IPredicate predecessorPre = callerFrame.get(level - 1).getSecond();
+
 					final UnmodifiableTransFormula globalVarsAssignments = mCsToolkit.getOldVarsAssignmentCache()
 							.getGlobalVarsAssignment(predecessorTransition.getSucceedingProcedure());
-					
+
 					final UnmodifiableTransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
 							.getOldVarsAssignment(predecessorTransition.getSucceedingProcedure());
-					
-					final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
+
+					final Set<IProgramNonOldVar> modifiableGlobalsPred =
+							mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(pp.getProcedure());
+
+					final Set<IProgramNonOldVar> modifiableGlobalsSucc = mCsToolkit.getModifiableGlobalsTable()
 							.getModifiedBoogieVars(predecessorTransition.getSucceedingProcedure());
-					
+
 					final Pair<List<LETTER>, UnmodifiableTransFormula> proc = getProcedureTrace(pp, returnTrans,
-							globalVarsAssignments, oldVarAssignments, modifiableGlobals);
-					
+							globalVarsAssignments, oldVarAssignments, modifiableGlobalsSucc);
+
 					final UnmodifiableTransFormula procFormula = proc.getSecond();
 					final IPredicate preHier = mPredicateUnifier
 							.getOrConstructPredicate(mPredTrans.pre(callerFrame.get(level).getSecond(), procFormula));
-					
-					/*
-					 * Problem: somehow we get a false in here. Blocking any further attempt.
-					 */
-					result = checkSatReturn(predecessorFrame, preHier, returnTrans, toBeBlocked);
-					
+
+					final UnmodifiableTransFormula tr = returnTrans.getAssignmentOfReturn();
+					final UnmodifiableTransFormula ta = returnTrans.getLocalVarsAssignmentOfCall();
+
+					final LBool res = PredicateUtils.isInductiveHelper(mScript.getScript(), predecessorPre,
+							not(toBeBlocked), procFormula, modifiableGlobalsPred, modifiableGlobalsSucc);
+					// result = checkSatReturn(predecessorFrame, preHier, returnTrans, toBeBlocked);
+
 					/*
 					 * Query is satisfiable: generate new proofobligation
 					 */
-					if (result == Validity.INVALID) {
+					if (res == LBool.SAT) {
 						if (level - 1 == 0) {
 							return false;
 						}
-						Term pre = mPredTrans.preReturn(toBeBlocked, preHier, returnTrans.getAssignmentOfReturn(),
-								returnTrans.getLocalVarsAssignmentOfCall(), oldVarAssignments, modifiableGlobals);
+						Term pre = mPredTrans.pre(toBeBlocked, procFormula);
+						// Term pref = mPredTrans.preReturn(toBeBlocked, preHier,
+						// returnTrans.getAssignmentOfReturn(),
+						// returnTrans.getLocalVarsAssignmentOfCall(), oldVarAssignments,
+						// modifiableGlobalsSucc);
 
-						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, 
-								pre, SimplificationTechnique.SIMPLIFY_BDD_FIRST_ORDER, 
+						pre = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, pre,
+								SimplificationTechnique.SIMPLIFY_BDD_FIRST_ORDER,
 								XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-						
+
 						final IPredicate preCondition = mPredicateUnifier.getOrConstructPredicate(pre);
-						addProofObligation(proofObligations, proofObligation, level, predecessor, preCondition);
+						addProofObligation(proofObligations, proofObligation, level, pp, preCondition);
+
 						/*
 						 * Query is not satisfiable: strengthen the frames of location.
 						 */
-					} else if (result == Validity.VALID) {
+					} else if (res == LBool.UNSAT) {
 						updateFrames(toBeBlocked, location, level);
+						proofObligation.addBlockedQuery(query);
 					} else {
 						mLogger.error(String.format("Return query %s && %s && %s && %s was unknown", predecessorFrame,
 								preHier, returnTrans, toBeBlocked));
@@ -609,7 +642,8 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 							prePred.getClosedFormula(), transformedPrePred, frameAndTransPred.getClosedFormula()));
 		}
 
-		// TODO: The interpolant is now full of variables that are constants and primed constant_pv_prime; we have to go
+		// TODO: The interpolant is now full of variables that are constants and primed
+		// constant_pv_prime; we have to go
 		// back to unprimed and un-constants
 
 		for (final IProgramVar var : frameAndTransPred.getVars()) {
@@ -676,7 +710,7 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 	}
 
 	/**
-	 * Get a summarized procedure call.
+	 * Get a {@link UnmodifiableTransFormula} representing how the procedure changes the variables.
 	 *
 	 * @param callLoc
 	 * @param returnTrans
@@ -718,11 +752,16 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 				SimplificationTechnique.SIMPLIFY_DDA, procTfs);
 
 		final UnmodifiableTransFormula procTfCallReturn = TransFormulaUtils.sequentialCompositionWithCallAndReturn(
-				mScript, true, false, false, returnTrans.getLocalVarsAssignmentOfCall(), oldVarAssignments,
+				mScript, true, true, false, returnTrans.getLocalVarsAssignmentOfCall(), oldVarAssignments,
 				globalVarsAssignments, procTf, returnTrans.getTransformula(), mLogger, mServices,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
 				mSymbolTable, modifiableGlobals);
 
+		// why no corresponding variable?!
+		// updateFrames(mPredicateUnifier.getOrConstructPredicate(procTf.getFormula()), returnLoc, mLevel);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("New transformula for %s is %s", procedureTrace, procTfCallReturn);
+		}
 		return new Pair<>(procedureTrace, procTfCallReturn);
 
 	}
@@ -871,6 +910,34 @@ public class Pdr<LETTER extends IIcfgTransition<?>> implements ITraceCheck, IInt
 			++i;
 		}
 		return interpolants;
+	}
+
+	/**
+	 * Compute a primed version of pred, meaning priming the variables changed by tf.
+	 *
+	 * @param script
+	 * @param pred
+	 * @param tf
+	 * @param modifiableGlobals
+	 * @return
+	 */
+	private static Term primePredicate(final Script script, final IPredicate pred, final UnmodifiableTransFormula tf,
+			final Set<IProgramNonOldVar> modifiableGlobals) {
+		// Set of changed vars by tf
+		final Set<IProgramVar> assignedVars = tf.getAssignedVars();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		for (final IProgramVar bv : pred.getVars()) {
+			Term constant;
+			if (assignedVars.contains(bv)) {
+				constant = bv.getPrimedConstant();
+			} else {
+				constant = bv.getDefaultConstant();
+			}
+			substitutionMapping.put(bv.getTermVariable(), constant);
+		}
+		final Substitution priming = new Substitution(script, substitutionMapping);
+		final Term result = priming.transform(pred.getFormula());
+		return result;
 	}
 
 	/**

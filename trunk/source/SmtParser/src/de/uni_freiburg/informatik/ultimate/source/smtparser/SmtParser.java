@@ -45,6 +45,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger.LogLevel;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.ExceptionThrowingParseEnvironment;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.smt.UltimateEliminator;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -52,10 +55,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ExceptionThrowingParseEnvironment;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.UltimateEliminator;
-import de.uni_freiburg.informatik.ultimate.mso.MSODIntScript;
+import de.uni_freiburg.informatik.ultimate.mso.MSODAutomataOperationsBuchi;
+import de.uni_freiburg.informatik.ultimate.mso.MSODAutomataOperationsWeak;
+import de.uni_freiburg.informatik.ultimate.mso.MSODFormulaOperationsInt;
+import de.uni_freiburg.informatik.ultimate.mso.MSODFormulaOperationsNat;
+import de.uni_freiburg.informatik.ultimate.mso.MSODOperations;
+import de.uni_freiburg.informatik.ultimate.mso.MSODScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
@@ -197,12 +202,9 @@ public class SmtParser implements ISource {
 			return;
 		}
 
-
-
 		final Script script;
 		switch (smtParserMode) {
-		case GenericSmtSolver:
-		{
+		case GenericSmtSolver: {
 			mLogger.info("Running solver on smt file");
 			// if (useExternalSolver) {
 			// mLogger.info("Starting external SMT solver with command " + commandExternalSolver);
@@ -223,12 +225,46 @@ public class SmtParser implements ISource {
 			// }
 		}
 			break;
+
 		case MsoSolver: {
-			mLogger.info("Running our experimental MSO solver on input file");
-			// script = new MoNatDiffScript(mServices, mLogger);
-			script = new MSODIntScript(mServices, mLogger);
+			mLogger.info("Running our experimental MSO solver on input file using ...");
+
+			switch (msoLogic) {
+
+			case MSODNatWeak: {
+				mLogger.info("MSODNatWeak");
+				script = new MSODScript(mServices, mLogger,
+						new MSODOperations(new MSODFormulaOperationsNat(), new MSODAutomataOperationsWeak()));
+			}
+				break;
+
+			case MSODNat: {
+				mLogger.info("MSODNat");
+				script = new MSODScript(mServices, mLogger,
+						new MSODOperations(new MSODFormulaOperationsNat(), new MSODAutomataOperationsBuchi()));
+			}
+				break;
+
+			case MSODIntWeak: {
+				mLogger.info("MSODIntWeak");
+				script = new MSODScript(mServices, mLogger,
+						new MSODOperations(new MSODFormulaOperationsInt(), new MSODAutomataOperationsWeak()));
+			}
+				break;
+
+			case MSODInt: {
+				mLogger.info("MSODInt");
+				script = new MSODScript(mServices, mLogger,
+						new MSODOperations(new MSODFormulaOperationsInt(), new MSODAutomataOperationsBuchi()));
+			}
+				break;
+
+			default:
+				throw new AssertionError("unknown value " + msoLogic);
+			}
 		}
 			break;
+
 		case UltimateEliminator: {
 			mLogger.info("Running UltimateEliminator on input file");
 			final ILogger solverLogger = mServices.getLoggingService().getLoggerForExternalTool("SolverLogger");
@@ -265,12 +301,11 @@ public class SmtParser implements ISource {
 			throw new AssertionError("unknown value " + smtParserMode);
 		}
 
-
 		// mLogger.info("Executing SMT file " + file.getAbsolutePath());
 
 		final OptionMap optionMap = new OptionMap(logProxy, true);
 
-		if (smtParserMode == SmtParserMode.UltimateTreeAutomizer || smtParserMode == smtParserMode.UltimateEliminator) {
+		if (smtParserMode == SmtParserMode.UltimateTreeAutomizer || smtParserMode == SmtParserMode.UltimateEliminator) {
 			// crash in Horn solver mode if parsing fails
 			optionMap.set(":continue-on-error", false);
 			optionMap.set(":print-success", false);
@@ -286,7 +321,7 @@ public class SmtParser implements ISource {
 		} catch (final SMTLIBException exc) {
 			mLogger.info("Failed while executing SMT file " + file.getAbsolutePath());
 			mLogger.info("SMTLIBException " + exc.getMessage());
-//			parseEnv.printError(exc.getMessage());
+			// parseEnv.printError(exc.getMessage());
 			throw exc;
 		} finally {
 			script.exit();
@@ -317,7 +352,7 @@ public class SmtParser implements ISource {
 		} catch (final SMTLIBException exc) {
 			mLogger.info("Failed while writing SMT file " + outputFilename);
 			mLogger.error("SMTLIBException " + exc.getMessage());
-//			parseEnv2.printError(exc.getMessage());
+			// parseEnv2.printError(exc.getMessage());
 		}
 	}
 

@@ -1,5 +1,29 @@
-/**
- * TODO: Copyright.
+/*
+ * Copyright (C) 2019 Nico Hauff (hauffn@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
+ * Copyright (C) 2019 University of Freiburg
+ *
+ * This file is part of the ULTIMATE MSO Library package.
+ *
+ * The ULTIMATE MSO Library package library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE MSO Library package library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE MSO Library package. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE MSO Library package, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE MSO Library package library grant you additional permission
+ * to convey the resulting work.
  */
 
 package de.uni_freiburg.informatik.ultimate.mso;
@@ -16,7 +40,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * TODO: Comment.
+ * Represents a MSOD-alphabet symbol. Each MSOD-alphabet symbol has a HashMap of term-value pairs.
  *
  * @author Elisabeth Henkel (henkele@informatik.uni-freiburg.de)
  * @author Nico Hauff (hauffn@informatik.uni-freiburg.de)
@@ -29,22 +53,22 @@ public class MSODAlphabetSymbol {
 	 * Constructor for empty alphabet symbol.
 	 */
 	public MSODAlphabetSymbol() {
-		mMap = new HashMap<Term, Boolean>();
+		mMap = new HashMap<>();
 	}
 
 	/**
 	 * Constructor for alphabet symbol that contains a single variable.
 	 */
 	public MSODAlphabetSymbol(final Term term, final boolean value) {
-		mMap = new HashMap<Term, Boolean>();
+		mMap = new HashMap<>();
 		add(term, value);
 	}
-	
+
 	/**
 	 * Constructor for alphabet symbol that contains two variables.
 	 */
 	public MSODAlphabetSymbol(final Term term1, final Term term2, final boolean value1, final boolean value2) {
-		mMap = new HashMap<Term, Boolean>();
+		mMap = new HashMap<>();
 		add(term1, value1);
 		add(term2, value2);
 	}
@@ -60,7 +84,7 @@ public class MSODAlphabetSymbol {
 			throw new InvalidParameterException("Input terms, values of different length.");
 		}
 
-		mMap = new HashMap<Term, Boolean>();
+		mMap = new HashMap<>();
 		for (int i = 0; i < terms.length; i++) {
 			add(terms[i], values[i]);
 		}
@@ -76,14 +100,14 @@ public class MSODAlphabetSymbol {
 	/**
 	 * Returns the terms contained in this alphabet symbol.
 	 */
-	public final Term[] getTerms() {
-		return mMap.keySet().toArray(new Term[0]);
+	public final Set<Term> getTerms() {
+		return mMap.keySet();
 	}
 
 	/**
 	 * Adds the given variable to this alphabet symbol.
 	 *
-	 * @throws InvalidParameterException
+	 * @throws IllegalArgumentException
 	 *             if term is not of type Int or SetOfInt.
 	 */
 	public void add(final Term term, final boolean value) {
@@ -119,6 +143,29 @@ public class MSODAlphabetSymbol {
 		return true;
 	}
 
+	/*
+	 * Returns a set with terms that match the given sorts.
+	 */
+	public Set<Term> containsSort(final String sort) {
+
+		return containsSort(new HashSet<>(Arrays.asList(sort)));
+	}
+
+	/*
+	 * Returns a set with terms that match the given sorts.
+	 */
+	public Set<Term> containsSort(final Set<String> sorts) {
+		final Set<Term> result = new HashSet<>();
+
+		for (final Term term : getTerms()) {
+			if (sorts.contains(term.getSort().getName())) {
+				result.add(term);
+			}
+		}
+
+		return result;
+	}
+
 	/**
 	 * Returns a string representation of this alphabet symbol.
 	 */
@@ -148,11 +195,11 @@ public class MSODAlphabetSymbol {
 		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
-		
+
 		if (this == obj) {
 			return true;
 		}
-		
+
 		final MSODAlphabetSymbol other = (MSODAlphabetSymbol) obj;
 		return mMap.equals(other.mMap);
 	}

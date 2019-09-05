@@ -1,11 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
+/**
+ * {scope}, it is always the case that if "P" holds, then "Q" eventually holds and is succeeded by "R", where "S" does not hold between "T" and "U"
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
 
 public class ConstrainedChainPattern extends PatternType {
@@ -16,7 +20,7 @@ public class ConstrainedChainPattern extends PatternType {
 	}
 
 	@Override
-	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
+	public CounterTrace transform(CDD[] cdds, int[] durations) {
 		throw new UnsupportedOperationException();
 	}
 

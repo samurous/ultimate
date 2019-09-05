@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 
+import java.util.Arrays;
 import java.util.StringTokenizer;
 
 import org.eclipse.core.runtime.preferences.InstanceScope;
@@ -66,7 +67,7 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 
 	@Override
 	protected void setThePreference(final String[] items) {
-		final StringBuffer buffer = new StringBuffer();
+		final StringBuilder buffer = new StringBuilder();
 		for (int i = 0; i < items.length; i++) {
 			buffer.append(items[i]);
 			buffer.append(CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
@@ -76,8 +77,7 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 
 	@Override
 	protected String getInfoContent(final List detailList) {
-		final String response = CorePreferenceInitializer.ALL_PLUGINS_PRESENT;
-		final StringBuffer invalidPluginIds = new StringBuffer();
+		final StringBuilder invalidPluginIds = new StringBuilder();
 		invalidPluginIds.append(CorePreferenceInitializer.PLUGINS_NOT_PRESENT);
 		boolean error = false;
 		for (final String line : detailList.getItems()) {
@@ -90,10 +90,10 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 		if (error) {
 			return invalidPluginIds.toString();
 		}
-		return response;
+		return CorePreferenceInitializer.ALL_PLUGINS_PRESENT;
 	}
 
-	private boolean isActivePluginId(final String pluginId) {
+	private static boolean isActivePluginId(final String pluginId) {
 		// hack until this class is auto-generated
 		final String[] plugins = UltimateCore.getPluginNames();
 		boolean retVal = false;
@@ -113,18 +113,17 @@ public class LoggingSpecificPluginsPreferencePage extends AbstractDetailsPrefere
 		if (plugins == null) {
 			return new String[0];
 		}
-
-		final String[] return_list = new String[plugins.length];
-
+		Arrays.sort(plugins);
+		final String[] rtr = new String[plugins.length];
 		for (int i = 0; i < plugins.length; i++) {
-			return_list[i] = plugins[i] + "=<LOG LEVEL>";
+			rtr[i] = plugins[i] + "=<LOG LEVEL>";
 		}
-		return return_list;
+		return rtr;
 	}
 
 	private static String[] convert(final String preferenceValue) {
-		final StringTokenizer tokenizer = new StringTokenizer(preferenceValue,
-				CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
+		final StringTokenizer tokenizer =
+				new StringTokenizer(preferenceValue, CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		final int tokenCount = tokenizer.countTokens();
 		final String[] elements = new String[tokenCount];
 		for (int i = 0; i < tokenCount; i++) {

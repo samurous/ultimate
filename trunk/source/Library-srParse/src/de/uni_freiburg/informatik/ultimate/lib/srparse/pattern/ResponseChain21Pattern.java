@@ -1,28 +1,49 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse.pattern;
 
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
-import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
+import de.uni_freiburg.informatik.ultimate.lib.pea.CounterTrace;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScope;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBefore;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.SrParseScopeBetween;
 
+/**
+ * TODO: fix description
+ *
+ * {scope}, it is always the case that if "" holds and is succeeded by "P", then "S" eventually holds after "T"
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class ResponseChain21Pattern extends PatternType {
+
 	public ResponseChain21Pattern(final SrParseScope scope, final String id, final List<CDD> cdds,
 			final List<String> durations) {
 		super(scope, id, cdds, durations);
 	}
 
 	@Override
-	public PhaseEventAutomata transform(final PatternToPEA peaTrans, final Map<String, Integer> id2bounds) {
-		final CDD p_cdd = getCdds().get(2);
-		final CDD q_cdd = getScope().getCdd1();
-		final CDD r_cdd = getScope().getCdd2();
-		final CDD s_cdd = getCdds().get(1);
-		final CDD t_cdd = getCdds().get(0);
+	public CounterTrace transform(CDD[] cdds, int[] durations) {
+		final SrParseScope scope = getScope();
+		final CDD P = getCdds().get(2);
+		final CDD R = scope.getCdd2();
+		final CDD S = getCdds().get(1);
+		final CDD T = getCdds().get(0);
 
-		return peaTrans.responseChainPattern21(getId(), p_cdd, q_cdd, r_cdd, s_cdd, t_cdd, getScope().toString());
+		if (scope instanceof SrParseScopeBefore) {
+			final CounterTrace ct = counterTrace(phase(R.negate()), phase(S.and(R.negate()).and(T.negate())),
+					phase(R.negate()), phase(T.and(R.negate())), phase(P.negate().and(R.negate())), phase(R), phaseT());
+
+			return ct;
+		} else if (scope instanceof SrParseScopeBetween) {
+			final CDD Q = getScope().getCdd1();
+			final CounterTrace ct = counterTrace(phaseT(), phase(Q.and(R.negate())), phase(R.negate()),
+					phase(S.and(R.negate()).and(T.negate())), phase(R.negate()), phase(T.and(R.negate())),
+					phase(P.negate().and(R.negate())), phase(R), phaseT());
+			return ct;
+		}
+		throw new PatternScopeNotImplemented(scope.getClass(), getClass());
 	}
 
 	@Override

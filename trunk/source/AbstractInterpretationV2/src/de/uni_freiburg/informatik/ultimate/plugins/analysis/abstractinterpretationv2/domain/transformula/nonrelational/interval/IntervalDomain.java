@@ -5,10 +5,10 @@ import java.util.function.Supplier;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainPreferences;
@@ -71,8 +71,8 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Icfg
 		if (mPostOperator == null) {
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
-			final Supplier<IntervalDomainState> topStateSupplier = () -> createTopState();
-			final Supplier<IntervalDomainState> bottomStateSupplier = () -> createBottomState();
+			final Supplier<IntervalDomainState> topStateSupplier = this::createTopState;
+			final Supplier<IntervalDomainState> bottomStateSupplier = this::createBottomState;
 			mPostOperator = new IntervalPostOperator(mLogger, maxParallelStates, topStateSupplier, bottomStateSupplier);
 		}
 		return mPostOperator;
