@@ -10,9 +10,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public class SMTFeatureExtractorScript extends WrapperScript {
 
-	SMTFeatureExtractor mFeatureExtractor;
-	ILogger mLogger;
-	IUltimateServiceProvider mServices;
+	private final SMTFeatureExtractor mFeatureExtractor;
+	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
 
 	/**
 	 * Create a new script which can extract properties of SMTterms and measure time of checkSat().
@@ -26,6 +26,24 @@ public class SMTFeatureExtractorScript extends WrapperScript {
 		mLogger = logger;
 		mServices = services;
 		mFeatureExtractor = new SMTFeatureExtractor(logger, services, dump_path);
+	}
+
+	@Override
+	public LBool assertTerm(final Term term) throws SMTLIBException {
+		// TODO Auto-generated method stub
+		return super.assertTerm(term);
+	}
+
+	@Override
+	public void push(final int levels) throws SMTLIBException {
+		// TODO Auto-generated method stub
+		super.push(levels);
+	}
+
+	@Override
+	public void pop(final int levels) throws SMTLIBException {
+		// TODO Auto-generated method stub
+		super.pop(levels);
 	}
 
 	@Override
