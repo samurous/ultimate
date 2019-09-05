@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.logic;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Base class for implementing wrapping scripts.
@@ -41,7 +43,52 @@ public abstract class WrapperScript implements Script {
 	protected final Script mScript;
 
 	protected WrapperScript(final Script wrappedScript) {
-		mScript = wrappedScript;
+		mScript = Objects.requireNonNull(wrappedScript);
+	}
+
+	/**
+	 * Find the first {@link Script} instance that has the given type or is a subtype of the given type in the stack of
+	 * {@link Script} instances represented by this {@link WrapperScript}.
+	 *
+	 * @param <T>
+	 *            The type of {@link Script} to search for.
+	 * @param clazz
+	 *            The {@link Class} instance representing the type.
+	 * @return A {@link Script} instance if one can be found or null.
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends Script> T findBacking(final Class<T> clazz) {
+		final Iterator<Script> iter = getScriptIterator();
+		while (iter.hasNext()) {
+			final Script current = iter.next();
+			if (clazz.isAssignableFrom(current.getClass())) {
+				return (T) current;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @return an {@link Iterator} that iterates over this stack of {@link Script} instances.
+	 */
+	public Iterator<Script> getScriptIterator() {
+		final Script current = this;
+		return new Iterator<Script>() {
+
+			private Script mBacking = current;
+
+			@Override
+			public boolean hasNext() {
+				return mBacking instanceof WrapperScript;
+			}
+
+			@Override
+			public Script next() {
+				final Script rtr = mBacking;
+				mBacking = ((WrapperScript) mBacking).mScript;
+				return rtr;
+			}
+		};
 	}
 
 	@Override
